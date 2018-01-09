@@ -8,12 +8,8 @@ InteractiveSVGCanvas.create = function(id) {
 
 InteractiveSVGCanvas.prototype.addDraggablePoint = function(attr) {
     var $point = $(document.createElementNS('http://www.w3.org/2000/svg', 'circle'));
-    $.extend(attr, { class: 'draggable-point' })
-    $point.attr(attr);
+    var defaultAttr = { r: 6, class: 'draggable-point' }
+    $.extend(defaultAttr, attr);
+    $point.attr(defaultAttr);
     this.svgElement.append($point);
-}
-
-function createInteractiveCanvas(id) {
-    $svg = InteractiveSVGCanvas.create(id);
-    $svg.addDraggablePoint({ cx: 100, cy: 150, r: 6 });
 }

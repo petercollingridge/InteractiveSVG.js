@@ -16,7 +16,8 @@
 		<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200" width="300" height="200" id="svg1">
 			<script type="text/javascript">
 			  <![CDATA[
-			    var canvas1 = createInteractiveCanvas('svg1');
+			    var canvas1 = InteractiveSVGCanvas.create('svg1');
+			    canvas1.addDraggablePoint({ cx: 100, cy: 150 });
 			  ]]>
 			</script>
 		</svg>
