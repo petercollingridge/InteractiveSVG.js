@@ -1,0 +1,30 @@
+<!DOCTYPE HTML>
+<html lang="en">
+
+<head>
+    <title>Interactive SVGs</title>
+    <link rel="stylesheet" type="text/css" href="interactiveSVG.css">
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+    <script type="text/javascript" src="interactiveSVG.js"></script>
+</head>
+
+<body>
+	<h1>Test page</h1>
+	<p>This page contains multiple inline SVGs to make sure they don't interact with one another.</p>
+	<p>Here is the first</p>
+	<div>
+		<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200" width="300" height="200" id="svg1">
+			<script type="text/javascript">
+			  <![CDATA[
+			    var canvas1 = createInteractiveCanvas('svg1');
+			  ]]>
+			</script>
+		</svg>
+	</div>
+	<p>Here is another</p>
+	<div>
+		<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200" width="400" height="400">
+		</svg>
+	</div>
+</body>
+</html>
