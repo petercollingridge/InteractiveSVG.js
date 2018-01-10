@@ -23,7 +23,7 @@ var LineSegmentFromPoints = function(svgObject, label, p1, p2, attr) {
     };
 
     $.extend(defaultAttr, attr);
-    this.$element = svgObject.addElement('line', defaultAttr);
+    this.$element = svgObject.addElementToBottom('line', defaultAttr);
 }
 
 LineSegmentFromPoints.prototype.update = function() {
@@ -90,7 +90,7 @@ var InteractiveSVG = function($container, width, height) {
     this.lines = {};
     this.selected = false;
     this._addMouseEventHandlers();
-    this._addBackground();
+    this.$background = this._addBackground();
 };
 
 InteractiveSVG.create = function(id, width, height) {
@@ -150,7 +150,7 @@ InteractiveSVG.prototype._addMouseEventHandlers = function() {
 };
 
 InteractiveSVG.prototype._addBackground = function() {
-    this.addElement('rect', {
+    return this.addElement('rect', {
         class: 'background',
         width: this.$svg.attr('width'),
         height: this.$svg.attr('height')
@@ -188,4 +188,10 @@ InteractiveSVG.prototype.addElement = function(tagName, attr) {
     return $(document.createElementNS(xmlns, tagName))
             .attr(attr)
             .appendTo(this.$svg);
+};
+
+InteractiveSVG.prototype.addElementToBottom = function(tagName, attr) {
+    return $(document.createElementNS(xmlns, tagName))
+            .attr(attr)
+            .insertAfter(this.$background);
 };
