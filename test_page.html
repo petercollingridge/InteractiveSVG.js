@@ -12,18 +12,14 @@
 	<h1>Test page</h1>
 	<p>This page contains multiple inline SVGs to make sure they don't interact with one another.</p>
 	<p>Here is the first</p>
-	<div>
-		<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200" width="300" height="200" id="svg1">
-			<script type="text/javascript">
-			  <![CDATA[
-			    var canvas1 = InteractiveSVGCanvas.create('svg1');
-			    var p1 = canvas1.addDraggablePoint({ cx: 100, cy: 150 });
-			    var p2 = canvas1.addDraggablePoint({ cx: 200, cy: 50 });
-			    var L1 = canvas1.addLineFromPoints(p1, p2);
-			  ]]>
-			</script>
-		</svg>
-	</div>
+	<div id="svg1"></div>
+	<script type="text/javascript">
+	    var canvas1 = InteractiveSVG.create('svg1', 300, 200);
+	    var p1 = canvas1.addPoint('P1', { x: 100, y: 150 });
+	    var p2 = canvas1.addPoint('P2', { x: 200, y: 50 });
+	    //var L1 = canvas1.addLineFromPoints(p1, p2);
+	</script>
+
 	<p>Here is another</p>
 	<div id="svg2"></div>
 	<script type="text/javascript">
@@ -34,9 +30,11 @@
 			points: {
 				A: { x: 100, y: 150},
 				B: { x: 200, y: 50},
+				C: { x: 50, y: 25},
 			},
 			lines: {
-				AB: { p1: 'A', p2: 'B' }
+				AB: { p1: 'A', p2: 'B' },
+				C0: { p1: 'C', p2: {x: 150, y: 160} }
 			}
 		});
 	</script>
