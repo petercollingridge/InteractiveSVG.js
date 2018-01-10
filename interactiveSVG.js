@@ -5,10 +5,14 @@ var xmlns = 'http://www.w3.org/2000/svg';
  *  A line between two draggable points
 **************************************************/
 
-var LineSegmentFromPoints = function(svgObject, p1, p2, attr) {
+var LineSegmentFromPoints = function(svgObject, label, p1, p2, attr) {
     this.$svg = svgObject.$svg;
+    this.label = label;
     this.p1 = p1;
     this.p2 = p2;
+
+    if (p1.dependents) { p1.dependents[label] = this; }
+    if (p2.dependents) { p2.dependents[label] = this; }
 
     var defaultAttr = {
         class: 'line-segment',
@@ -18,18 +22,30 @@ var LineSegmentFromPoints = function(svgObject, p1, p2, attr) {
         y2: p2.y
     };
 
+    $.extend(defaultAttr, attr);
     this.$element = svgObject.addElement('line', defaultAttr);
 }
+
+LineSegmentFromPoints.prototype.update = function() {
+    this.$element.attr({
+        x1: this.p1.x,
+        y1: this.p1.y,
+        x2: this.p2.x,
+        y2: this.p2.y
+    });
+};
 
 /*************************************************
  *      DraggablePoint
  *  A point that can be dragged.
 **************************************************/
 
-var DraggablePoint = function(svgObject, x, y, attr) {
+var DraggablePoint = function(svgObject, label, x, y, attr) {
     this.$svg = svgObject.$svg;
+    this.label = label;
     this.x = x || 0;
     this.y = y || 0;
+    this.dependents = {};
 
     var defaultAttr = { cx: x, cy: y, r: 6, class: 'draggable-point' }
     $.extend(defaultAttr, attr);
@@ -51,6 +67,10 @@ DraggablePoint.prototype.move = function(dx, dy) {
     this.x += dx;
     this.y += dy;
     this.$element.attr({ cx: this.x, cy: this.y });
+
+    for (var element in this.dependents) {
+        this.dependents[element].update();
+    }
 };
 
 /*************************************************
@@ -135,7 +155,7 @@ InteractiveSVG.prototype.addPoint = function(label, attr) {
     delete attr.x;
     delete attr.y;
 
-    var point = new DraggablePoint(this, x, y, attr);
+    var point = new DraggablePoint(this, label, x, y, attr);
     this.points[label] = point;
     return point;
 };
@@ -150,7 +170,7 @@ InteractiveSVG.prototype.addLine = function(label, attr) {
     if (typeof p1 === 'string') { p1 = this.points[p1]; }
     if (typeof p2 === 'string') { p2 = this.points[p2]; }
 
-    var line = new LineSegmentFromPoints(this, p1, p2, attr);
+    var line = new LineSegmentFromPoints(this, label, p1, p2, attr);
     this.lines[label] = line;
     return line;
 };
