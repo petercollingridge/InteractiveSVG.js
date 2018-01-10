@@ -1,3 +1,7 @@
+svg .background {
+	fill: #f8f8f8;
+}
+
 svg .static-line {
     stroke-width: 2px;
     stroke: rgb(64, 95, 237);
@@ -10,7 +14,7 @@ svg .line-segment {
 
 svg .draggable-point {
     fill: rgb(255, 165, 0);
-    stroke: white;
+    stroke: #f8f8f8;
     stroke-width: 1;
     cursor: pointer
 }

@@ -90,6 +90,7 @@ var InteractiveSVG = function($container, width, height) {
     this.lines = {};
     this.selected = false;
     this._addMouseEventHandlers();
+    this._addBackground();
 };
 
 InteractiveSVG.create = function(id, width, height) {
@@ -145,6 +146,14 @@ InteractiveSVG.prototype._addMouseEventHandlers = function() {
 
     this.$svg.on('mouseup', function() {
         self.selected = false;
+    });
+};
+
+InteractiveSVG.prototype._addBackground = function() {
+    this.addElement('rect', {
+        class: 'background',
+        width: this.$svg.attr('width'),
+        height: this.$svg.attr('height')
     });
 };
 
