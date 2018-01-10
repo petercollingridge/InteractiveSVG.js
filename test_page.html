@@ -17,15 +17,28 @@
 			<script type="text/javascript">
 			  <![CDATA[
 			    var canvas1 = InteractiveSVGCanvas.create('svg1');
-			    canvas1.addDraggablePoint({ cx: 100, cy: 150 });
+			    var p1 = canvas1.addDraggablePoint({ cx: 100, cy: 150 });
+			    var p2 = canvas1.addDraggablePoint({ cx: 200, cy: 50 });
+			    var L1 = canvas1.addLineFromPoints(p1, p2);
 			  ]]>
 			</script>
 		</svg>
 	</div>
 	<p>Here is another</p>
-	<div>
-		<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200" width="400" height="400">
-		</svg>
-	</div>
+	<div id="svg2"></div>
+	<script type="text/javascript">
+		InteractiveSVG.createFromJSON({
+			id: 'svg2',
+			width: 300,
+			height: 200,
+			points: {
+				A: { x: 100, y: 150},
+				B: { x: 200, y: 50},
+			},
+			lines: {
+				AB: { p1: 'A', p2: 'B' }
+			}
+		});
+	</script>
 </body>
 </html>
