@@ -2,14 +2,14 @@ svg .background {
 	fill: #f8f8f8;
 }
 
-svg .static-line {
+svg .line-segment {
     stroke-width: 2px;
     stroke: rgb(64, 95, 237);
 }
 
-svg .line-segment {
+svg .line-highlight {
     stroke-width: 2px;
-    stroke: rgb(64, 95, 237);
+    stroke: rgb(255, 0, 175);
 }
 
 svg .draggable-point {
