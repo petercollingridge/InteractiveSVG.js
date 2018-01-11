@@ -9,34 +9,51 @@
 </head>
 
 <body>
-	<h1>Test page</h1>
-	<p>This page contains multiple inline SVGs to make sure they don't interact with one another.</p>
-	<p>Here is the first</p>
-	<div id="svg1"></div>
-	<script type="text/javascript">
-	    var canvas1 = InteractiveSVG.create('svg1', 300, 200);
-	    var p1 = canvas1.addPoint('P1', { x: 100, y: 150 });
-	    var p2 = canvas1.addPoint('P2', { x: 200, y: 50 });
-	    var L1 = canvas1.addLine('L1', { p1: p1, p2: p2 });
-	</script>
+    <h1>Test page</h1>
+    <p>This page contains multiple inline SVGs to make sure they don't interact with one another.</p>
+    <p>Here is the first</p>
+    <div id="svg1"></div>
+    <script type="text/javascript">
+        (function() {
+            var canvas1 = InteractiveSVG.create('svg1', 300, 200);
+            var A = canvas1.addPoint('A', { x: 100, y: 150 });
+            var B = canvas1.addPoint('B', { x: 200, y: 50 });
+            var C = canvas1.addPoint('C', { x: 50, y: 25 });
+            var D = canvas1.addPoint('D', { x: 150, y: 160 });
+            var L1 = canvas1.addLine('L1', { p1: A, p2: B });
+            var L2 = canvas1.addLine('L2', { p1: C, p2: D });
 
-	<p>Here is another</p>
-	<div id="svg2"></div>
-	<script type="text/javascript">
-		InteractiveSVG.createFromJSON({
-			id: 'svg2',
-			width: 300,
-			height: 200,
-			points: {
-				A: { x: 100, y: 150},
-				B: { x: 200, y: 50},
-				C: { x: 50, y: 25},
-			},
-			lines: {
-				AB: { p1: 'A', p2: 'B' },
-				C0: { p1: 'C', p2: {x: 150, y: 160} }
-			}
-		});
-	</script>
+            var testForIntersection = function() {
+                if (lineLineIntersection(L1, L2)) {
+                    L1.$element.addClass('line-highlight');
+                    L2.$element.addClass('line-highlight');
+                } else {
+                    L1.$element.removeClass('line-highlight');
+                    L2.$element.removeClass('line-highlight');
+                }
+            };
+            L1.onMove = testForIntersection;
+            L2.onMove = testForIntersection;
+        })();
+    </script>
+
+    <p>Here is another</p>
+    <div id="svg2"></div>
+    <script type="text/javascript">
+        var canvas2 = InteractiveSVG.createFromJSON({
+            id: 'svg2',
+            width: 300,
+            height: 200,
+            points: {
+                A: { x: 100, y: 150},
+                B: { x: 200, y: 50},
+                C: { x: 50, y: 25},
+            },
+            lines: {
+                AB: { p1: 'A', p2: 'B' },
+                C0: { p1: 'C', p2: {x: 150, y: 160} }
+            }
+        });
+    </script>
 </body>
 </html>
