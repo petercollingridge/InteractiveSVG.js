@@ -1,5 +1,38 @@
 var xmlns = 'http://www.w3.org/2000/svg';
 
+function lineLineIntersection(line1, line2) {
+    // Lines as vectors
+    var dx1 = line1.p2.x - line1.p1.x;
+    var dy1 = line1.p2.y - line1.p1.y;
+    var dx2 = line2.p2.x - line2.p1.x;
+    var dy2 = line2.p2.y - line2.p1.y;
+
+    // Shift lines so line1.p1 is at 0
+    var dx3 = line2.p1.x - line1.p1.x;
+    var dy3 = line2.p1.y - line1.p1.y;
+    
+    var cross = dx2 * dy1 - dy2 * dx1;
+    if (Math.abs(cross) < 1e-8) { return false; }
+
+    // Find proportion along line 2
+    var s = (dx1 * dy3 - dy1 * dx3) / cross;
+    
+    // Check point is on line 2
+    if (s >= 0 && s <= 1) {
+        // Find proportion along line 1
+        var t = dx1 !== 0 ? (dx3 + dx2 * s) / dx1 : (dy3 + dy2 * s) / dy1;
+
+        // Check point is on line 1
+        if (t >= 0 && t <= 1) {
+            // Return intersection
+            return {
+                x: line2.p1.x + dx2 * s,
+                y: line2.p1.y + dy2 * s
+            };
+        }
+    }
+}
+
 /*************************************************
  *      LineSegmentFromPoints
  *  A line between two draggable points
@@ -26,6 +59,7 @@ var LineSegmentFromPoints = function(svgObject, label, p1, p2, attr) {
     this.$element = svgObject.addElementToBottom('line', defaultAttr);
 }
 
+// Updates the position of the line to end at the end points.
 LineSegmentFromPoints.prototype.update = function() {
     this.$element.attr({
         x1: this.p1.x,
@@ -33,6 +67,8 @@ LineSegmentFromPoints.prototype.update = function() {
         x2: this.p2.x,
         y2: this.p2.y
     });
+
+    if (this.onMove) { this.onMove(); }
 };
 
 /*************************************************
