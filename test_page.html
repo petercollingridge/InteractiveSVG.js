@@ -23,17 +23,26 @@
             var L1 = canvas1.addLine('L1', { p1: A, p2: B });
             var L2 = canvas1.addLine('L2', { p1: C, p2: D });
 
+            var E = canvas1.addPoint('E', {
+                x: 100, y: 100, r: 4, static: true, class: 'point-highlight'
+            });
+
             var testForIntersection = function() {
-                if (lineLineIntersection(L1, L2)) {
+                var intersection = lineLineIntersection(L1, L2);
+                if (intersection) {
                     L1.$element.addClass('line-highlight');
                     L2.$element.addClass('line-highlight');
+                    E.setPosiiton(intersection.x, intersection.y);
+                    E.$element.removeClass('hidden');
                 } else {
                     L1.$element.removeClass('line-highlight');
                     L2.$element.removeClass('line-highlight');
+                    E.$element.addClass('hidden');
                 }
             };
             L1.onMove = testForIntersection;
             L2.onMove = testForIntersection;
+            testForIntersection();
         })();
     </script>
 

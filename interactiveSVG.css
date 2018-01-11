@@ -7,14 +7,24 @@ svg .line-segment {
     stroke: rgb(64, 95, 237);
 }
 
-svg .line-highlight {
-    stroke-width: 2px;
-    stroke: rgb(255, 0, 175);
-}
-
 svg .draggable-point {
     fill: rgb(255, 165, 0);
     stroke: #f8f8f8;
     stroke-width: 1;
     cursor: pointer
+}
+
+svg .point-highlight {
+	fill: rgb(255, 0, 175);
+	stroke: #f8f8f8;
+    stroke-width: 1;
+}
+
+svg .line-highlight {
+    stroke-width: 2px;
+    stroke: rgb(255, 0, 175);
+}
+
+svg .hidden {
+	visibility: hidden;
 }

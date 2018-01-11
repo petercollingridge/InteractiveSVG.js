@@ -99,10 +99,10 @@ var DraggablePoint = function(svgObject, label, x, y, attr) {
     });
 };
 
-DraggablePoint.prototype.move = function(dx, dy) {
-    this.x += dx;
-    this.y += dy;
-    this.$element.attr({ cx: this.x, cy: this.y });
+DraggablePoint.prototype.setPosiiton = function(x, y) {
+    this.x = x;
+    this.y = y;
+    this.$element.attr({ cx: x, cy: y });
 
     for (var element in this.dependents) {
         this.dependents[element].update();
@@ -172,7 +172,7 @@ InteractiveSVG.prototype._addMouseEventHandlers = function() {
             // Move based on change in mouse position
             var dx = evt.clientX - self.dragX;
             var dy = evt.clientY - self.dragY;
-            self.selected.move(dx, dy);
+            self.selected.setPosiiton(self.selected.x + dx, self.selected.y + dy);
 
             // Update mouse position
             self.dragX = evt.clientX;
