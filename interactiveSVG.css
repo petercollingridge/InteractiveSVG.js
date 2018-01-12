@@ -1,30 +1,69 @@
-svg .background {
-	fill: #f8f8f8;
+.interactiveSVG .background {
+    fill: #f8f8f8;
 }
 
-svg .line-segment {
-    stroke-width: 2px;
-    stroke: rgb(64, 95, 237);
+/*  Elements can be points (filled) or lines */
+.interactiveSVG .point {
+    stroke: #f8f8f8;
+    stroke-width: 1;
 }
 
-svg .draggable-point {
+.interactiveSVG .line {
+    fill: none;
+    stroke-width: 2;
+}
+
+/*  Color of element determined by role:
+    Orange: draggable, can be dragged directly,
+    Blue: controllable, moved indrectly by draggable elements, 
+    Green: generated, positioned determined by position of other elements
+    Pink: highlight,
+    Grey: static
+*/
+
+.interactiveSVG .draggable-point {
     fill: rgb(255, 165, 0);
     stroke: #f8f8f8;
     stroke-width: 1;
     cursor: pointer
 }
 
-svg .point-highlight {
-	fill: rgb(255, 0, 175);
-	stroke: #f8f8f8;
-    stroke-width: 1;
+.interactiveSVG .draggable-line {
+    stroke: rgb(255, 165, 0);
+    stroke-width: 3;
+    cursor: pointer
 }
 
-svg .line-highlight {
-    stroke-width: 2px;
+.interactiveSVG .highlight-point {
+    fill: rgb(255, 0, 175);
+}
+
+.interactiveSVG .highlight-line {
     stroke: rgb(255, 0, 175);
 }
 
-svg .hidden {
-	visibility: hidden;
+.interactiveSVG .controllable-point {
+    fill: rgb(64, 95, 237);
 }
+
+.interactiveSVG .controllable-line {
+    stroke: rgb(64, 95, 237);
+}
+
+.interactiveSVG .generated-point {
+    fill: rgb(28, 173, 123);
+}
+
+.interactiveSVG .generated-line {
+    stroke: rgb(28, 173, 123);
+}
+
+.interactiveSVG .static-point {
+    fill: rgb(120, 120, 120);
+}
+
+.interactiveSVG .static-line {
+    stroke: rgb(120, 120, 120);
+    stroke-width: 1px;
+}
+
