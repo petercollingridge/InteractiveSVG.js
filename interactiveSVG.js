@@ -34,44 +34,6 @@ function lineLineIntersection(line1, line2) {
 }
 
 /*************************************************
- *      LineSegmentFromPoints
- *  A line between two draggable points
-**************************************************/
-
-var LineSegmentFromPoints = function(svgObject, label, p1, p2, attr) {
-    this.$svg = svgObject.$svg;
-    this.label = label;
-    this.p1 = p1;
-    this.p2 = p2;
-
-    if (p1.dependents) { p1.dependents[label] = this; }
-    if (p2.dependents) { p2.dependents[label] = this; }
-
-    var defaultAttr = {
-        class: 'line-segment',
-        x1: p1.x,
-        y1: p1.y,
-        x2: p2.x,
-        y2: p2.y
-    };
-
-    $.extend(defaultAttr, attr);
-    this.$element = svgObject.addElementToBottom('line', defaultAttr);
-}
-
-// Updates the position of the line to end at the end points.
-LineSegmentFromPoints.prototype.update = function() {
-    this.$element.attr({
-        x1: this.p1.x,
-        y1: this.p1.y,
-        x2: this.p2.x,
-        y2: this.p2.y
-    });
-
-    if (this.onMove) { this.onMove(); }
-};
-
-/*************************************************
  *      DraggablePoint
  *  A point that can be dragged.
 **************************************************/
@@ -83,7 +45,7 @@ var DraggablePoint = function(svgObject, label, x, y, attr) {
     this.y = y || 0;
     this.dependents = {};
 
-    var defaultAttr = { cx: x, cy: y, r: 6, class: 'draggable-point' }
+    var defaultAttr = { cx: x, cy: y, r: 6, class: 'point draggable-point' }
     $.extend(defaultAttr, attr);
     this.$element = svgObject.addElement('circle', defaultAttr);
 
@@ -110,6 +72,83 @@ DraggablePoint.prototype.setPosiiton = function(x, y) {
 };
 
 /*************************************************
+ *      LineSegmentFromPoints
+ *  A line between two draggable points
+**************************************************/
+
+var LineSegmentFromPoints = function(svgObject, label, p1, p2, attr) {
+    this.$svg = svgObject.$svg;
+    this.label = label;
+    this.p1 = p1;
+    this.p2 = p2;
+
+    // Make line position depend on end points
+    if (p1.dependents) { p1.dependents[label] = this; }
+    if (p2.dependents) { p2.dependents[label] = this; }
+
+    var defaultAttr = {
+        class: 'line controllable-line',
+        x1: p1.x,
+        y1: p1.y,
+        x2: p2.x,
+        y2: p2.y
+    };
+
+    $.extend(defaultAttr, attr);
+    this.$element = svgObject.addElementToBottom('line', defaultAttr);
+}
+
+// Updates the position of the line to end at the end points.
+LineSegmentFromPoints.prototype.update = function() {
+    this.$element.attr({
+        x1: this.p1.x,
+        y1: this.p1.y,
+        x2: this.p2.x,
+        y2: this.p2.y
+    });
+
+    if (this.onMove) { this.onMove(); }
+};
+
+/*************************************************
+ *      LineSegmentFromPoints
+ *  A line between two draggable points
+**************************************************/
+
+var DraggableCircle = function(svgObject, label, center, attr) {
+    this.$svg = svgObject.$svg;
+    this.label = label;
+    this.center = center;
+    this.type = 'static';
+
+    // Make circle position depend on center points
+    if (center.dependents) {
+        this.type = 'controllable';
+        center.dependents[label] = this;
+    }
+
+    var defaultAttr = {
+        class: "line " + this.type + "-line",
+        r: 20,
+        cx: center.x,
+        cy: center.y,
+    };
+
+    $.extend(defaultAttr, attr);
+    this.$element = svgObject.addElementToBottom('circle', defaultAttr);
+}
+
+// Updates the position of the line to end at the end points.
+DraggableCircle.prototype.update = function() {
+    this.$element.attr({
+        cx: this.center.x,
+        cy: this.center.y,
+    });
+
+    if (this.onMove) { this.onMove(); }
+};
+
+/*************************************************
  *      InteractiveSVG
  *  Main object for the whole SVG.
 **************************************************/
@@ -118,8 +157,9 @@ var InteractiveSVG = function($container, width, height) {
     this.$svg = $(document.createElementNS(xmlns, 'svg'));
     this.$svg.attr({
         xmlns: xmlns,
+        class: 'interactiveSVG',
         width: width || 400,
-        height: height || 400
+        height: height || 400,
     }).appendTo($container);
 
     this.points = {};
@@ -195,8 +235,8 @@ InteractiveSVG.prototype._addBackground = function() {
 
 InteractiveSVG.prototype.addPoint = function(label, attr) {
     // Extract x and y coordinates from attr hash
-    var x = attr.x;
-    var y = attr.y;
+    var x = attr.x || 0;
+    var y = attr.y || 0;
     delete attr.x;
     delete attr.y;
 
@@ -207,8 +247,8 @@ InteractiveSVG.prototype.addPoint = function(label, attr) {
 
 InteractiveSVG.prototype.addLine = function(label, attr) {
     // Extract x and y coordinates from attr hash
-    var p1 = attr.p1;
-    var p2 = attr.p2;
+    var p1 = attr.p1 || { x: 0, y: 0 };
+    var p2 = attr.p2 || { x: 0, y: 0 };
     delete attr.p1;
     delete attr.p2;
 
@@ -218,6 +258,16 @@ InteractiveSVG.prototype.addLine = function(label, attr) {
     var line = new LineSegmentFromPoints(this, label, p1, p2, attr);
     this.lines[label] = line;
     return line;
+};
+
+InteractiveSVG.prototype.addCircle = function(label, attr) {
+    // Extract x and y coordinates from attr hash
+    var center = attr.center || { x: 0, y: 0 };
+    delete attr.center;
+
+    var circle = new DraggableCircle(this, label, center, attr);
+    this.lines[label] = circle;
+    return circle;
 };
 
 InteractiveSVG.prototype.addElement = function(tagName, attr) {
