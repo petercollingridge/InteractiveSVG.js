@@ -75,17 +75,6 @@ function defineCircleFromThreePoints(p1, p2, p3) {
     return {center: {x: cx, y: cy}, r: r};
 }
 
-function _setAsDraggable(self) {
-    self.$element.on('mousedown', function(evt) {
-        self.svg.selected = self;
-
-        // Get dragging to work on touch device
-        if (evt.type === 'touchstart') { evt = evt.touches[0]; }
-        self.svg.dragX = evt.clientX;
-        self.svg.dragY = evt.clientY;
-    });
-}
-
 /*************************************************
  *      InteractivePoint
  *  An SVG circle which can be draggable.
@@ -117,7 +106,7 @@ var InteractivePoint = function(svgObject, attr) {
 
     if (draggable) {
         this.dependents = {};
-        _setAsDraggable(this);
+        svgObject._setAsDraggable(this);
     }
 
     if (this.label) { svgObject.points[this.label] = this; }
@@ -267,6 +256,14 @@ InteractiveSVG.createFromJSON = function(data) {
     return svgObject;
 };
 
+InteractiveSVG.prototype._addBackground = function() {
+    return this.addElement('rect', {
+        class: 'background',
+        width: this.$svg.attr('width'),
+        height: this.$svg.attr('height')
+    });
+};
+
 InteractiveSVG.prototype._addMouseEventHandlers = function() {
     var self = this;
 
@@ -292,13 +289,17 @@ InteractiveSVG.prototype._addMouseEventHandlers = function() {
     });
 };
 
-InteractiveSVG.prototype._addBackground = function() {
-    return this.addElement('rect', {
-        class: 'background',
-        width: this.$svg.attr('width'),
-        height: this.$svg.attr('height')
+InteractiveSVG.prototype._setAsDraggable = function(element) {
+    var self = this;
+    element.$element.on('mousedown', function(evt) {
+        self.selected = element;
+
+        // Get dragging to work on touch device
+        if (evt.type === 'touchstart') { evt = evt.touches[0]; }
+        self.dragX = evt.clientX;
+        self.dragY = evt.clientY;
     });
-};
+}
 
 InteractiveSVG.prototype._getElement = function(type, label) {
     var dictOfElements = this[type];
