@@ -6,6 +6,13 @@
     <link rel="stylesheet" type="text/css" href="interactiveSVG.css">
     <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
     <script type="text/javascript" src="interactiveSVG.js"></script>
+
+    <style type="text/css">
+        .svg-wrapper {
+            display: inline-block;  
+        }
+    </style>
+
 </head>
 
 <body>
@@ -13,13 +20,9 @@
     <p>This page contains multiple inline SVGs to make sure they don't interact with one another.</p>
 
     <p>Here is the first</p>
-    <div id="svg1"></div>
-
-    <p>Here is another</p>
-    <div id="svg2"></div>
-
-    <p>Here is another</p>
-    <div id="svg3"></div>
+    <div id="svg1" class="svg-wrapper"></div>
+    <div id="svg2" class="svg-wrapper"></div>
+    <div id="svg3" class="svg-wrapper"></div>
 
     <script type="text/javascript">
         (function() {
@@ -68,12 +71,11 @@
             height: 200,
             points: [
                 { label: "A", x: 100, y: 150 },
-                { label: "B", x: 200, y: 50 },
-                { label: "C", x: 50, y: 25 },
+                { label: "B", x: 200, y: 50 }
             ],
             lines: [
                 { p1: 'A', p2: 'B' },
-                { p1: 'C', p2: {x: 150, y: 160} }
+                { p1: {x: 50, y: 25}, p2: {x: 150, y: 160} }
             ]
         });
     </script>
