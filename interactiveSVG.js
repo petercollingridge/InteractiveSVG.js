@@ -33,6 +33,48 @@ function lineLineIntersection(line1, line2) {
     }
 }
 
+function defineCircleFromThreePoints(p1, p2, p3) {
+    var dx1 = p1.x - p2.x;
+    var dy1 = p1.y - p2.y;
+    var dx2 = p2.x - p3.x;
+    var dy2 = p2.y - p3.y;
+
+    var cross = dx2 * dy1 - dy2 * dx1;
+
+    // If points are colinear(ish), we have a line.
+    if (Math.abs(cross) < 0.01) {
+        var d = Math.sqrt(dx1 * dx1 + dy1 * dy1);
+        // TODO: improve how points are picked
+        dx1 *= 2000 / d;
+        dy1 *= 2000 / d;
+        
+        return {
+            p1: { x: p1.x + dx1, y: p1.y + dy1},
+            p2: { x: p1.x - dx1, y: p1.y - dy1}
+        };
+    }
+
+    // Mid-point coordinates
+    var mx1 = (p1.x + p2.x) / 2;
+    var my1 = (p1.y + p2.y) / 2;
+    var mx2 = (p2.x + p3.x) / 2;
+    var my2 = (p2.y + p3.y) / 2;
+
+    // Find intersection of lines in terms of position along 2 bisector
+    var s = (-dy1 * (my2 - my1) - dx1 * (mx2 - mx1)) / cross;
+
+    // Center of circle is along the line from (mx2, my2) in the direction (dy2, dx2)
+    var cx = mx2 - s * dy2;
+    var cy = my2 + s * dx2;
+
+    // Find radius
+    var dx = cx - p1.x;
+    var dy = cy - p1.y;
+    var r = Math.sqrt(dx * dx + dy * dy);
+
+    return {center: {x: cx, y: cy}, r: r};
+}
+
 function _setAsDraggable(self) {
     self.$element.on('mousedown', function(evt) {
         self.svg.selected = self;
@@ -42,7 +84,7 @@ function _setAsDraggable(self) {
         self.svg.dragX = evt.clientX;
         self.svg.dragY = evt.clientY;
     });
-};
+}
 
 /*************************************************
  *      InteractivePoint
