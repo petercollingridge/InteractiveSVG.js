@@ -33,13 +33,24 @@ function lineLineIntersection(line1, line2) {
     }
 }
 
+function _setAsDraggable(self) {
+    self.$element.on('mousedown', function(evt) {
+        self.svg.selected = self;
+
+        // Get dragging to work on touch device
+        if (evt.type === 'touchstart') { evt = evt.touches[0]; }
+        self.svg.dragX = evt.clientX;
+        self.svg.dragY = evt.clientY;
+    });
+};
+
 /*************************************************
  *      DraggablePoint
  *  A point that can be dragged.
 **************************************************/
 
 var DraggablePoint = function(svgObject, label, x, y, attr) {
-    this.$svg = svgObject.$svg;
+    this.svg = svgObject
     this.label = label;
     this.x = x || 0;
     this.y = y || 0;
@@ -49,16 +60,11 @@ var DraggablePoint = function(svgObject, label, x, y, attr) {
     $.extend(defaultAttr, attr);
     this.$element = svgObject.addElement('circle', defaultAttr);
 
-    // Add handler to allow dragging
-    var self = this;
-    this.$element.on('mousedown', function(evt) {
-        svgObject.selected = self;
+    _setAsDraggable(this);
+};
 
-        // Get dragging to work on touch device
-        if (evt.type === 'touchstart') { evt = evt.touches[0]; }
-        svgObject.dragX = evt.clientX;
-        svgObject.dragY = evt.clientY;
-    });
+DraggablePoint.prototype.move = function(dx, dy) {
+    this.setPosition(this.x + dx, this.y + dy);
 };
 
 DraggablePoint.prototype.setPosition = function(x, y) {
@@ -138,7 +144,7 @@ var DraggableCircle = function(svgObject, label, center, attr) {
     this.$element = svgObject.addElementToBottom('circle', defaultAttr);
 }
 
-// Updates the position of the line to end at the end points.
+// Updates the position of the circle to encircle the center point.
 DraggableCircle.prototype.update = function() {
     this.$element.attr({
         cx: this.center.x,
@@ -210,9 +216,10 @@ InteractiveSVG.prototype._addMouseEventHandlers = function() {
             if (evt.type === 'touchmove') { evt = evt.touches[0]; }
 
             // Move based on change in mouse position
-            var dx = evt.clientX - self.dragX;
-            var dy = evt.clientY - self.dragY;
-            self.selected.setPosiiton(self.selected.x + dx, self.selected.y + dy);
+            self.selected.move(
+                evt.clientX - self.dragX,
+                evt.clientY - self.dragY
+            );
 
             // Update mouse position
             self.dragX = evt.clientX;
