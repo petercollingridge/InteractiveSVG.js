@@ -11,7 +11,7 @@ Library for quickly generating interactive SVGs
 
 ## To Do
   * Draggable lines
-  * Static circle
+  * Static line
   * Circle with radius dependent on point
   * Circle defined by three points
   * Polgon with draggable center
