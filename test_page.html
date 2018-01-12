@@ -58,6 +58,8 @@
             var A = canvas1.addPoint('A', { x: 150, y: 100 });
             var C1 = canvas1.addCircle('C1', { center: A, r: 50 });
             var C2 = canvas1.addCircle('C2', { center: {x: 100, y: 40}, r: 40 });
+            var P1 = canvas1.addPoint('P1', { x: 50, y: 50, static: true });
+            var P2 = canvas1.addStaticPoint('P2', { x: 50, y: 60 });
         })();
 
         var canvas2 = InteractiveSVG.createFromJSON({

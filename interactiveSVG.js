@@ -45,29 +45,40 @@ function _setAsDraggable(self) {
 };
 
 /*************************************************
- *      DraggablePoint
- *  A point that can be dragged.
+ *      InteractivePoint
+ *  An SVG circle which can be draggable.
 **************************************************/
 
-var DraggablePoint = function(svgObject, label, x, y, attr) {
+var InteractivePoint = function(svgObject, label, draggable, x, y, attr) {
     this.svg = svgObject
     this.label = label;
     this.x = x || 0;
     this.y = y || 0;
-    this.dependents = {};
 
-    var defaultAttr = { cx: x, cy: y, r: 6, class: 'point draggable-point' }
+    var defaultAttr = { cx: x, cy: y }
+    if (draggable) {
+         defaultAttr.r = 6;
+        defaultAttr.class = "point draggable-point";
+    } else {
+        defaultAttr.r = 3;
+        defaultAttr.class = "point static-point";
+    }
+
     $.extend(defaultAttr, attr);
     this.$element = svgObject.addElement('circle', defaultAttr);
+    
+    if (draggable) {
+        this.dependents = {};
+        _setAsDraggable(this);
+    }
 
-    _setAsDraggable(this);
 };
 
-DraggablePoint.prototype.move = function(dx, dy) {
+InteractivePoint.prototype.move = function(dx, dy) {
     this.setPosition(this.x + dx, this.y + dy);
 };
 
-DraggablePoint.prototype.setPosition = function(x, y) {
+InteractivePoint.prototype.setPosition = function(x, y) {
     this.x = x;
     this.y = y;
     this.$element.attr({ cx: x, cy: y });
@@ -117,8 +128,8 @@ LineSegmentFromPoints.prototype.update = function() {
 };
 
 /*************************************************
- *      LineSegmentFromPoints
- *  A line between two draggable points
+ *      DraggableCircle
+ *  A circle which can be dragged by its center.
 **************************************************/
 
 var DraggableCircle = function(svgObject, label, center, attr) {
@@ -244,10 +255,24 @@ InteractiveSVG.prototype.addPoint = function(label, attr) {
     // Extract x and y coordinates from attr hash
     var x = attr.x || 0;
     var y = attr.y || 0;
+    var static = attr.static;
+    delete attr.x;
+    delete attr.y;
+    delete attr.static;
+
+    var point = new InteractivePoint(this, label, !static, x, y, attr);
+    this.points[label] = point;
+    return point;
+};
+
+InteractiveSVG.prototype.addStaticPoint = function(label, attr) {
+    // Extract x and y coordinates from attr hash
+    var x = attr.x || 0;
+    var y = attr.y || 0;
     delete attr.x;
     delete attr.y;
 
-    var point = new DraggablePoint(this, label, x, y, attr);
+    var point = new InteractivePoint(this, label, false, x, y, attr);
     this.points[label] = point;
     return point;
 };
