@@ -61,7 +61,7 @@ var DraggablePoint = function(svgObject, label, x, y, attr) {
     });
 };
 
-DraggablePoint.prototype.setPosiiton = function(x, y) {
+DraggablePoint.prototype.setPosition = function(x, y) {
     this.x = x;
     this.y = y;
     this.$element.attr({ cx: x, cy: y });
