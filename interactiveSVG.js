@@ -49,13 +49,19 @@ function _setAsDraggable(self) {
  *  An SVG circle which can be draggable.
 **************************************************/
 
-var InteractivePoint = function(svgObject, draggable, x, y, attr, label) {
+var InteractivePoint = function(svgObject, attr) {
     this.svg = svgObject
-    this.label = label;
-    this.x = x || 0;
-    this.y = y || 0;
+    this.x = attr.x || 0;
+    this.y = attr.y || 0;
+    this.label = attr.label;
+    var draggable = !attr.static;
 
-    var defaultAttr = { cx: x, cy: y }
+    delete attr.x;
+    delete attr.y;
+    delete attr.label;
+    delete attr.static;
+
+    var defaultAttr = { cx: this.x, cy: this.y }
     if (draggable) {
          defaultAttr.r = 6;
         defaultAttr.class = "point draggable-point";
@@ -66,11 +72,13 @@ var InteractivePoint = function(svgObject, draggable, x, y, attr, label) {
 
     $.extend(defaultAttr, attr);
     this.$element = svgObject.addElement('circle', defaultAttr);
-    
+
     if (draggable) {
         this.dependents = {};
         _setAsDraggable(this);
     }
+
+    if (this.label) { svgObject.points[this.label] = this; }
 };
 
 InteractivePoint.prototype.move = function(dx, dy) {
@@ -92,15 +100,25 @@ InteractivePoint.prototype.setPosition = function(x, y) {
  *  A line between two draggable points
 **************************************************/
 
-var LineSegmentFromPoints = function(svgObject, p1, p2, attr, label) {
+var LineSegmentFromPoints = function(svgObject, attr) {
     this.$svg = svgObject.$svg;
-    this.label = label;
+    this.label = attr.label;
+    var p1 = attr.p1 || { x: 0, y: 0 };
+    var p2 = attr.p2 || { x: 0, y: 0 };
+
+    delete attr.p1;
+    delete attr.p2;
+    delete attr.label;
+
+    // If p1 or p2 is a string then it should be a label, so look up the point
+    if (typeof p1 === 'string') { p1 = svgObject.getElement('points', p1); }
+    if (typeof p2 === 'string') { p2 = svgObject.getElement('points', p2); }
     this.p1 = p1;
     this.p2 = p2;
 
     // Make line position depend on end points
-    if (p1.dependents) { p1.dependents[label] = this; }
-    if (p2.dependents) { p2.dependents[label] = this; }
+    if (p1.dependents) { p1.dependents[this.label] = this; }
+    if (p2.dependents) { p2.dependents[this.label] = this; }
 
     var defaultAttr = {
         class: 'line controllable-line',
@@ -112,6 +130,7 @@ var LineSegmentFromPoints = function(svgObject, p1, p2, attr, label) {
 
     $.extend(defaultAttr, attr);
     this.$element = svgObject.addElementToBottom('line', defaultAttr);
+    if (this.label) { svgObject.lines[this.label] = this; }
 }
 
 // Updates the position of the line to end at the end points.
@@ -131,27 +150,32 @@ LineSegmentFromPoints.prototype.update = function() {
  *  A circle which can be dragged by its center.
 **************************************************/
 
-var DraggableCircle = function(svgObject, center, attr, label) {
+var DraggableCircle = function(svgObject, attr) {
     this.$svg = svgObject.$svg;
-    this.label = label;
-    this.center = center;
-    this.type = 'static';
 
+    this.center = attr.center || { x: 0, y: 0 };
+    this.label = attr.label;
+    delete attr.center;
+    delete attr.label;
+    
     // Make circle position depend on center points
-    if (center.dependents) {
+    if (this.center.dependents) {
         this.type = 'controllable';
-        center.dependents[label] = this;
+        this.center.dependents[this.label] = this;
+    } else {
+        this.type = 'static';
     }
 
     var defaultAttr = {
         class: "line " + this.type + "-line",
         r: 20,
-        cx: center.x,
-        cy: center.y,
+        cx: this.center.x,
+        cy: this.center.y,
     };
 
     $.extend(defaultAttr, attr);
     this.$element = svgObject.addElementToBottom('circle', defaultAttr);
+    if (this.label) { svgObject.lines[this.label] = this; }
 }
 
 // Updates the position of the circle to encircle the center point.
@@ -250,64 +274,36 @@ InteractiveSVG.prototype._addBackground = function() {
     });
 };
 
+InteractiveSVG.prototype.getElement = function(type, label) {
+    var dictOfElements = this[type];
+
+    if (dictOfElements) {
+        var element = dictOfElements[label];
+        if (element) {
+            return element;
+        } else {
+            console.error("No such " + type + " element with name " + label);
+        }
+    } else {
+        console.error("No such element type " + type);
+    }
+};
+
 InteractiveSVG.prototype.addPoint = function(attr) {
-    // Extract x and y coordinates from attr hash
-    var x = attr.x || 0;
-    var y = attr.y || 0;
-    var label = attr.label;
-    var static = attr.static;
-
-    delete attr.x;
-    delete attr.y;
-    delete attr.label;
-    delete attr.static;
-
-    var point = new InteractivePoint(this, !static, x, y, attr, label);
-    if (label) { this.points[label] = point; }
-    return point;
+    return new InteractivePoint(this, attr);
 };
 
 InteractiveSVG.prototype.addStaticPoint = function(attr) {
-    // Extract x and y coordinates from attr hash
-    var x = attr.x || 0;
-    var y = attr.y || 0;
-    var label = attr.label;
-    delete attr.x;
-    delete attr.y;
-    delete attr.label;
-
-    var point = new InteractivePoint(this, false, x, y, attr, label);
-    this.points[label] = point;
-    return point;
+    attr.static = true;
+    return new InteractivePoint(this, attr);
 };
 
 InteractiveSVG.prototype.addLine = function(attr) {
-    // Extract x and y coordinates from attr hash
-    var p1 = attr.p1 || { x: 0, y: 0 };
-    var p2 = attr.p2 || { x: 0, y: 0 };
-    var label = attr.label;
-    delete attr.p1;
-    delete attr.p2;
-    delete attr.label;
-
-    if (typeof p1 === 'string') { p1 = this.points[p1]; }
-    if (typeof p2 === 'string') { p2 = this.points[p2]; }
-
-    var line = new LineSegmentFromPoints(this, p1, p2, attr, label);
-    if (label) { this.lines[label] = line; }
-    return line;
+    return new LineSegmentFromPoints(this, attr);
 };
 
 InteractiveSVG.prototype.addCircle = function(attr) {
-    // Extract x and y coordinates from attr hash
-    var center = attr.center || { x: 0, y: 0 };
-    var label = attr.label;
-    delete attr.center;
-    delete attr.label;
-
-    var circle = new DraggableCircle(this, center, attr, label);
-    if (label) { this.lines[label] = circle; }
-    return circle;
+    return new DraggableCircle(this, attr);
 };
 
 InteractiveSVG.prototype.addElement = function(tagName, attr) {

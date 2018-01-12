@@ -55,7 +55,7 @@
 
         (function() {
             var canvas1 = InteractiveSVG.create('svg2', 300, 200);
-            var A = canvas1.addPoint({ x: 150, y: 100 });
+            var A = canvas1.addPoint({ label: 'A', x: 150, y: 100 });
             var C1 = canvas1.addCircle({ center: A, r: 50 });
             var C2 = canvas1.addCircle({ center: {x: 100, y: 40}, r: 40 });
             var P1 = canvas1.addPoint({ x: 50, y: 50, static: true });
