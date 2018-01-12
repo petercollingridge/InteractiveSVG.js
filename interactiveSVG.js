@@ -51,9 +51,9 @@ function _setAsDraggable(self) {
 
 var InteractivePoint = function(svgObject, attr) {
     this.svg = svgObject
+    this.label = attr.label;
     this.x = attr.x || 0;
     this.y = attr.y || 0;
-    this.label = attr.label;
     var draggable = !attr.static;
 
     delete attr.x;
@@ -103,29 +103,19 @@ InteractivePoint.prototype.setPosition = function(x, y) {
 var LineSegmentFromPoints = function(svgObject, attr) {
     this.$svg = svgObject.$svg;
     this.label = attr.label;
-    var p1 = attr.p1 || { x: 0, y: 0 };
-    var p2 = attr.p2 || { x: 0, y: 0 };
+    this.p1 = svgObject._getDependentPoint(this, attr, 'p1');
+    this.p2 = svgObject._getDependentPoint(this, attr, 'p2');
 
     delete attr.p1;
     delete attr.p2;
     delete attr.label;
 
-    // If p1 or p2 is a string then it should be a label, so look up the point
-    if (typeof p1 === 'string') { p1 = svgObject.getElement('points', p1); }
-    if (typeof p2 === 'string') { p2 = svgObject.getElement('points', p2); }
-    this.p1 = p1;
-    this.p2 = p2;
-
-    // Make line position depend on end points
-    if (p1.dependents) { p1.dependents[this.label] = this; }
-    if (p2.dependents) { p2.dependents[this.label] = this; }
-
     var defaultAttr = {
         class: 'line controllable-line',
-        x1: p1.x,
-        y1: p1.y,
-        x2: p2.x,
-        y2: p2.y
+        x1: this.p1.x,
+        y1: this.p1.y,
+        x2: this.p2.x,
+        y2: this.p2.y
     };
 
     $.extend(defaultAttr, attr);
@@ -152,19 +142,13 @@ LineSegmentFromPoints.prototype.update = function() {
 
 var DraggableCircle = function(svgObject, attr) {
     this.$svg = svgObject.$svg;
-
-    this.center = attr.center || { x: 0, y: 0 };
     this.label = attr.label;
+    this.center = svgObject._getDependentPoint(this, attr, 'center');
+    this.type = this.center.dependents ? 'controllable' : 'static';
+
     delete attr.center;
     delete attr.label;
-    
-    // Make circle position depend on center points
-    if (this.center.dependents) {
-        this.type = 'controllable';
-        this.center.dependents[this.label] = this;
-    } else {
-        this.type = 'static';
-    }
+
 
     var defaultAttr = {
         class: "line " + this.type + "-line",
@@ -274,7 +258,7 @@ InteractiveSVG.prototype._addBackground = function() {
     });
 };
 
-InteractiveSVG.prototype.getElement = function(type, label) {
+InteractiveSVG.prototype._getElement = function(type, label) {
     var dictOfElements = this[type];
 
     if (dictOfElements) {
@@ -287,6 +271,22 @@ InteractiveSVG.prototype.getElement = function(type, label) {
     } else {
         console.error("No such element type " + type);
     }
+};
+
+// Given an attribute dictionary, look up point with given name
+// If the name is not a string, but an object, use that object for the point
+InteractiveSVG.prototype._getDependentPoint = function(parent, attr, name) {
+    var point = attr[name] || { x: 0, y: 0 };
+
+    // If point is a label then look it up in the points dictioanry
+    if (typeof point === 'string') { point = this._getElement('points', point); }
+
+    // If point is now an InteractiveSVG object, then make the parent dependent on it
+    if (point.dependents) {
+        point.dependents[parent.label] = parent;
+    }
+
+    return point;
 };
 
 InteractiveSVG.prototype.addPoint = function(attr) {

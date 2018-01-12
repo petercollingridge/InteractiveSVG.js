@@ -26,7 +26,18 @@
 
     <script type="text/javascript">
         (function() {
-            var canvas1 = InteractiveSVG.create('svg1', 300, 200);
+            var svg = InteractiveSVG.create('svg1', 400, 400);
+            
+            // Create circle for defining inversion
+            var center = svg.addStaticPoint({ x: 200, y: 200 });
+            svg.addCircle({ center: center, r: 100 });
+
+            svg.addPoint({ label: 'A', x: 150, y: 100 });
+            svg.addCircle({ center: 'A', r: 40 });
+        })();
+
+        (function() {
+            var canvas1 = InteractiveSVG.create('svg2', 300, 200);
             var A = canvas1.addPoint({ x: 100, y: 150 });
             var B = canvas1.addPoint({ x: 200, y: 50 });
             var C = canvas1.addPoint({ x: 50, y: 25 });
@@ -54,15 +65,6 @@
             L1.onMove = testForIntersection;
             L2.onMove = testForIntersection;
             testForIntersection();
-        })();
-
-        (function() {
-            var canvas1 = InteractiveSVG.create('svg2', 300, 200);
-            var A = canvas1.addPoint({ label: 'A', x: 150, y: 100 });
-            var C1 = canvas1.addCircle({ center: A, r: 50 });
-            var C2 = canvas1.addCircle({ center: {x: 100, y: 40}, r: 40 });
-            var P1 = canvas1.addPoint({ x: 50, y: 50, static: true });
-            var P2 = canvas1.addStaticPoint({ x: 50, y: 60 });
         })();
 
         var canvas2 = InteractiveSVG.createFromJSON({
