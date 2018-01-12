@@ -24,14 +24,14 @@
     <script type="text/javascript">
         (function() {
             var canvas1 = InteractiveSVG.create('svg1', 300, 200);
-            var A = canvas1.addPoint('A', { x: 100, y: 150 });
-            var B = canvas1.addPoint('B', { x: 200, y: 50 });
-            var C = canvas1.addPoint('C', { x: 50, y: 25 });
-            var D = canvas1.addPoint('D', { x: 150, y: 160 });
-            var L1 = canvas1.addLine('L1', { p1: A, p2: B });
-            var L2 = canvas1.addLine('L2', { p1: C, p2: D });
+            var A = canvas1.addPoint({ x: 100, y: 150 });
+            var B = canvas1.addPoint({ x: 200, y: 50 });
+            var C = canvas1.addPoint({ x: 50, y: 25 });
+            var D = canvas1.addPoint({ x: 150, y: 160 });
+            var L1 = canvas1.addLine({ p1: A, p2: B });
+            var L2 = canvas1.addLine({ p1: C, p2: D });
 
-            var E = canvas1.addPoint('E', {
+            var E = canvas1.addPoint({
                 r: 4, static: true, class: 'point generated-point'
             });
 
@@ -55,26 +55,26 @@
 
         (function() {
             var canvas1 = InteractiveSVG.create('svg2', 300, 200);
-            var A = canvas1.addPoint('A', { x: 150, y: 100 });
-            var C1 = canvas1.addCircle('C1', { center: A, r: 50 });
-            var C2 = canvas1.addCircle('C2', { center: {x: 100, y: 40}, r: 40 });
-            var P1 = canvas1.addPoint('P1', { x: 50, y: 50, static: true });
-            var P2 = canvas1.addStaticPoint('P2', { x: 50, y: 60 });
+            var A = canvas1.addPoint({ x: 150, y: 100 });
+            var C1 = canvas1.addCircle({ center: A, r: 50 });
+            var C2 = canvas1.addCircle({ center: {x: 100, y: 40}, r: 40 });
+            var P1 = canvas1.addPoint({ x: 50, y: 50, static: true });
+            var P2 = canvas1.addStaticPoint({ x: 50, y: 60 });
         })();
 
         var canvas2 = InteractiveSVG.createFromJSON({
             id: 'svg3',
             width: 300,
             height: 200,
-            points: {
-                A: { x: 100, y: 150},
-                B: { x: 200, y: 50},
-                C: { x: 50, y: 25},
-            },
-            lines: {
-                AB: { p1: 'A', p2: 'B' },
-                C0: { p1: 'C', p2: {x: 150, y: 160} }
-            }
+            points: [
+                { label: "A", x: 100, y: 150 },
+                { label: "B", x: 200, y: 50 },
+                { label: "C", x: 50, y: 25 },
+            ],
+            lines: [
+                { p1: 'A', p2: 'B' },
+                { p1: 'C', p2: {x: 150, y: 160} }
+            ]
         });
     </script>
 </body>

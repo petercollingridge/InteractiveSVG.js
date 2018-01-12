@@ -49,7 +49,7 @@ function _setAsDraggable(self) {
  *  An SVG circle which can be draggable.
 **************************************************/
 
-var InteractivePoint = function(svgObject, label, draggable, x, y, attr) {
+var InteractivePoint = function(svgObject, draggable, x, y, attr, label) {
     this.svg = svgObject
     this.label = label;
     this.x = x || 0;
@@ -71,7 +71,6 @@ var InteractivePoint = function(svgObject, label, draggable, x, y, attr) {
         this.dependents = {};
         _setAsDraggable(this);
     }
-
 };
 
 InteractivePoint.prototype.move = function(dx, dy) {
@@ -93,7 +92,7 @@ InteractivePoint.prototype.setPosition = function(x, y) {
  *  A line between two draggable points
 **************************************************/
 
-var LineSegmentFromPoints = function(svgObject, label, p1, p2, attr) {
+var LineSegmentFromPoints = function(svgObject, p1, p2, attr, label) {
     this.$svg = svgObject.$svg;
     this.label = label;
     this.p1 = p1;
@@ -132,7 +131,7 @@ LineSegmentFromPoints.prototype.update = function() {
  *  A circle which can be dragged by its center.
 **************************************************/
 
-var DraggableCircle = function(svgObject, label, center, attr) {
+var DraggableCircle = function(svgObject, center, attr, label) {
     this.$svg = svgObject.$svg;
     this.label = label;
     this.center = center;
@@ -204,14 +203,14 @@ InteractiveSVG.createFromJSON = function(data) {
     var svgObject = this.create(data.id, data.width, data.height);
 
     if (data.points) {
-        for (var label in data.points) {
-            svgObject.addPoint(label, data.points[label]);
+        for (var i = 0; i < data.points.length; i++) {
+            svgObject.addPoint(data.points[i]);
         }
     }
 
     if (data.lines) {
-        for (var label in data.lines) {
-            svgObject.addLine(label, data.lines[label]);
+        for (var i = 0; i < data.lines.length; i++) {
+            svgObject.addLine(data.lines[i]);
         }
     }
 
@@ -251,54 +250,63 @@ InteractiveSVG.prototype._addBackground = function() {
     });
 };
 
-InteractiveSVG.prototype.addPoint = function(label, attr) {
+InteractiveSVG.prototype.addPoint = function(attr) {
     // Extract x and y coordinates from attr hash
     var x = attr.x || 0;
     var y = attr.y || 0;
+    var label = attr.label;
     var static = attr.static;
+
     delete attr.x;
     delete attr.y;
+    delete attr.label;
     delete attr.static;
 
-    var point = new InteractivePoint(this, label, !static, x, y, attr);
-    this.points[label] = point;
+    var point = new InteractivePoint(this, !static, x, y, attr, label);
+    if (label) { this.points[label] = point; }
     return point;
 };
 
-InteractiveSVG.prototype.addStaticPoint = function(label, attr) {
+InteractiveSVG.prototype.addStaticPoint = function(attr) {
     // Extract x and y coordinates from attr hash
     var x = attr.x || 0;
     var y = attr.y || 0;
+    var label = attr.label;
     delete attr.x;
     delete attr.y;
+    delete attr.label;
 
-    var point = new InteractivePoint(this, label, false, x, y, attr);
+    var point = new InteractivePoint(this, false, x, y, attr, label);
     this.points[label] = point;
     return point;
 };
 
-InteractiveSVG.prototype.addLine = function(label, attr) {
+InteractiveSVG.prototype.addLine = function(attr) {
     // Extract x and y coordinates from attr hash
     var p1 = attr.p1 || { x: 0, y: 0 };
     var p2 = attr.p2 || { x: 0, y: 0 };
+    var label = attr.label;
     delete attr.p1;
     delete attr.p2;
+    delete attr.label;
 
     if (typeof p1 === 'string') { p1 = this.points[p1]; }
     if (typeof p2 === 'string') { p2 = this.points[p2]; }
 
-    var line = new LineSegmentFromPoints(this, label, p1, p2, attr);
-    this.lines[label] = line;
+    var line = new LineSegmentFromPoints(this, p1, p2, attr, label);
+    if (label) { this.lines[label] = line; }
     return line;
 };
 
-InteractiveSVG.prototype.addCircle = function(label, attr) {
+InteractiveSVG.prototype.addCircle = function(attr) {
     // Extract x and y coordinates from attr hash
     var center = attr.center || { x: 0, y: 0 };
+    var label = attr.label;
     delete attr.center;
+    delete attr.label;
 
-    var circle = new DraggableCircle(this, label, center, attr);
-    this.lines[label] = circle;
+    var circle = new DraggableCircle(this, center, attr, label);
+    if (label) { this.lines[label] = circle; }
     return circle;
 };
 
