@@ -174,12 +174,16 @@ LineSegmentFromPoints.prototype.update = function() {
 var DraggableCircle = function(svgObject, attr) {
     this.$svg = svgObject.$svg;
     this.label = attr.label;
+
+    if (!attr.center && attr.x !== undefined && attr.y !== undefined) {
+        attr.center = { x: attr.x, y: attr.y };
+    }
+
     this.center = svgObject._getDependentPoint(this, attr, 'center');
     this.type = this.center.dependents ? 'controllable' : 'static';
 
     delete attr.center;
     delete attr.label;
-
 
     var defaultAttr = {
         class: "line " + this.type + "-line",
@@ -240,21 +244,20 @@ InteractiveSVG.createFromJSON = function(data) {
     }
 
     var svgObject = this.create(data.id, data.width, data.height);
-
-    if (data.points) {
-        for (var i = 0; i < data.points.length; i++) {
-            svgObject.addPoint(data.points[i]);
-        }
-    }
-
-    if (data.lines) {
-        for (var i = 0; i < data.lines.length; i++) {
-            svgObject.addLine(data.lines[i]);
-        }
-    }
+    this._addFromJSON(svgObject.addPoint.bind(svgObject), data.points);
+    this._addFromJSON(svgObject.addLine.bind(svgObject), data.lines);
+    this._addFromJSON(svgObject.addCircle.bind(svgObject), data.circles);
 
     return svgObject;
 };
+
+InteractiveSVG._addFromJSON = function(addFunction, arr) {
+    if (arr) {
+        for (var i = 0; i < arr.length; i++) {
+            addFunction(arr[i]);
+        }
+    }
+}
 
 InteractiveSVG.prototype._addBackground = function() {
     return this.addElement('rect', {
