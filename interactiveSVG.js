@@ -213,7 +213,7 @@ var InteractiveCircle = function(svgObject, attr) {
     }
 
     this.center = svgObject._getDependentPoint(this, attr, 'center');
-    this.type = this.center.dependents ? 'controllable' : 'static';
+    this.type = this.center.draggable ? 'controllable' : 'static';
     delete attr.center;
 
     var defaultAttr = {
