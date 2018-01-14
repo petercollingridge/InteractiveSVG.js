@@ -76,41 +76,80 @@ function defineCircleFromThreePoints(p1, p2, p3) {
 }
 
 /*************************************************
+ *      SVG Element Object
+ *  A object that wraps an SVG element.
+**************************************************/
+
+var SVGElement = function(svgObject, defaultAttr, attr) {
+    // Called when the element is updated
+    // Empty but can be overwritten
+    this.onUpdate = function() {};
+
+    // Array of object to update when this is updated
+    this.dependents = [];
+
+    this.label = attr.label;
+    delete attr.label;
+
+    // Create new SVG element
+    $.extend(defaultAttr, attr);
+    if (this.addBelow) {
+        this.$element = svgObject.addElementToBottom(this.tagName, defaultAttr);
+    } else {
+        this.$element = svgObject.addElement(this.tagName, defaultAttr);
+    }
+
+    if (this.draggable) {
+        svgObject._setAsDraggable(this);
+    }
+};
+
+// Update the object with new attributes
+SVGElement.prototype.update = function(attr) {
+    this.$element.attr(attr);
+
+    for (var i = 0; i < this.dependents.length; i++) {
+        this.dependents[i]();
+    }
+
+    this.onUpdate();
+};
+
+/*************************************************
  *      InteractivePoint
  *  An SVG circle which can be draggable.
 **************************************************/
 
 var InteractivePoint = function(svgObject, attr) {
-    this.svg = svgObject
-    this.label = attr.label;
+    this.tagName = "circle";
     this.x = attr.x || 0;
     this.y = attr.y || 0;
-    var draggable = !attr.static;
+    this.draggable = !attr.static;
 
     delete attr.x;
     delete attr.y;
-    delete attr.label;
     delete attr.static;
 
-    var defaultAttr = { cx: this.x, cy: this.y }
-    if (draggable) {
-         defaultAttr.r = 6;
-        defaultAttr.class = "point draggable-point";
+    var defaultAttr = {
+        cx: this.x,
+        cy: this.y,
+        class: "point"
+    };
+
+    if (this.draggable) {
+        defaultAttr.r = 6;
+        defaultAttr.class += " draggable-point";
     } else {
         defaultAttr.r = 3;
-        defaultAttr.class = "point static-point";
+        defaultAttr.class += " static-point";
     }
 
-    $.extend(defaultAttr, attr);
-    this.$element = svgObject.addElement('circle', defaultAttr);
-
-    if (draggable) {
-        this.dependents = {};
-        svgObject._setAsDraggable(this);
-    }
+    SVGElement.call(this, svgObject, defaultAttr, attr);
 
     if (this.label) { svgObject.points[this.label] = this; }
 };
+
+InteractivePoint.prototype = Object.create(SVGElement.prototype);
 
 InteractivePoint.prototype.move = function(dx, dy) {
     this.setPosition(this.x + dx, this.y + dy);
@@ -119,27 +158,21 @@ InteractivePoint.prototype.move = function(dx, dy) {
 InteractivePoint.prototype.setPosition = function(x, y) {
     this.x = x;
     this.y = y;
-    this.$element.attr({ cx: x, cy: y });
-
-    for (var element in this.dependents) {
-        this.dependents[element].update();
-    }
+    this.update({ cx: x, cy: y });
 };
 
 /*************************************************
- *      LineSegmentFromPoints
+ *      InteractiveLine
  *  A line between two draggable points
 **************************************************/
 
-var LineSegmentFromPoints = function(svgObject, attr) {
-    this.$svg = svgObject.$svg;
-    this.label = attr.label;
+var InteractiveLine = function(svgObject, attr) {
+    this.tagName = "line";
+    this.addBelow = true;
     this.p1 = svgObject._getDependentPoint(this, attr, 'p1');
     this.p2 = svgObject._getDependentPoint(this, attr, 'p2');
-
     delete attr.p1;
     delete attr.p2;
-    delete attr.label;
 
     var defaultAttr = {
         class: 'line controllable-line',
@@ -149,63 +182,55 @@ var LineSegmentFromPoints = function(svgObject, attr) {
         y2: this.p2.y
     };
 
-    $.extend(defaultAttr, attr);
-    this.$element = svgObject.addElementToBottom('line', defaultAttr);
+    SVGElement.call(this, svgObject, defaultAttr, attr);
     if (this.label) { svgObject.lines[this.label] = this; }
-}
 
-// Updates the position of the line to end at the end points.
-LineSegmentFromPoints.prototype.update = function() {
-    this.$element.attr({
-        x1: this.p1.x,
-        y1: this.p1.y,
-        x2: this.p2.x,
-        y2: this.p2.y
+    svgObject._addDependentAttribute(this, this.p1, function(p) {
+        return { x1: p.x, y1: p.y };
     });
-
-    if (this.onMove) { this.onMove(); }
-};
+    svgObject._addDependentAttribute(this, this.p2, function(p) {
+        return { x2: p.x, y2: p.y };
+    });
+}
+InteractiveLine.prototype = Object.create(SVGElement.prototype);
 
 /*************************************************
- *      DraggableCircle
+ *      InteractiveCircle
  *  A circle which can be dragged by its center.
 **************************************************/
 
-var DraggableCircle = function(svgObject, attr) {
-    this.$svg = svgObject.$svg;
-    this.label = attr.label;
+var InteractiveCircle = function(svgObject, attr) {
+    this.tagName = 'circle';
 
+    // Radius can be a number or determined by a point
+    this.r = attr.r || 20;
+    if (isNaN(this.r)) {
+        this.r = svgObject._getDependentPoint(this, attr, 'r');
+    }
+
+    // Center can be defined by a center attribute or x and y attributes
     if (!attr.center && attr.x !== undefined && attr.y !== undefined) {
         attr.center = { x: attr.x, y: attr.y };
     }
 
     this.center = svgObject._getDependentPoint(this, attr, 'center');
     this.type = this.center.dependents ? 'controllable' : 'static';
-
     delete attr.center;
-    delete attr.label;
 
     var defaultAttr = {
         class: "line " + this.type + "-line",
-        r: 20,
         cx: this.center.x,
         cy: this.center.y,
     };
 
-    $.extend(defaultAttr, attr);
-    this.$element = svgObject.addElementToBottom('circle', defaultAttr);
+    SVGElement.call(this, svgObject, defaultAttr, attr);
     if (this.label) { svgObject.lines[this.label] = this; }
-}
 
-// Updates the position of the circle to encircle the center point.
-DraggableCircle.prototype.update = function() {
-    this.$element.attr({
-        cx: this.center.x,
-        cy: this.center.y,
+    svgObject._addDependentAttribute(this, this.center, function(p) {
+        return { cx: p.x, cy: p.y };
     });
-
-    if (this.onMove) { this.onMove(); }
 };
+InteractiveCircle.prototype = Object.create(SVGElement.prototype);
 
 /*************************************************
  *      InteractiveSVG
@@ -327,12 +352,16 @@ InteractiveSVG.prototype._getDependentPoint = function(parent, attr, name) {
     // If point is a label then look it up in the points dictioanry
     if (typeof point === 'string') { point = this._getElement('points', point); }
 
-    // If point is now an InteractiveSVG object, then make the parent dependent on it
-    if (point.dependents) {
-        point.dependents[parent.label] = parent;
-    }
-
     return point;
+};
+
+InteractiveSVG.prototype._addDependentAttribute = function(dependentObj, controlPoint, updateFunction) {
+    // If point is an InteractiveSVG object, then make the parent dependent on it
+    if (controlPoint.dependents) {
+        controlPoint.dependents.push(function() {
+            dependentObj.update(updateFunction(controlPoint));
+        });
+    }
 };
 
 InteractiveSVG.prototype.addPoint = function(attr) {
@@ -345,11 +374,11 @@ InteractiveSVG.prototype.addStaticPoint = function(attr) {
 };
 
 InteractiveSVG.prototype.addLine = function(attr) {
-    return new LineSegmentFromPoints(this, attr);
+    return new InteractiveLine(this, attr);
 };
 
 InteractiveSVG.prototype.addCircle = function(attr) {
-    return new DraggableCircle(this, attr);
+    return new InteractiveCircle(this, attr);
 };
 
 InteractiveSVG.prototype.addElement = function(tagName, attr) {
