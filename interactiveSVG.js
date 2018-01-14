@@ -108,7 +108,7 @@ var SVGElement = function(svgObject, defaultAttr, attr) {
 
 // Update the object with new attributes
 SVGElement.prototype.update = function(attr) {
-    this.$element.attr(attr);
+    if (attr) { this.$element.attr(attr); }
 
     for (var i = 0; i < this.dependents.length; i++) {
         this.dependents[i]();
@@ -184,10 +184,10 @@ var InteractiveLine = function(svgObject, attr) {
 
     SVGElement.call(this, svgObject, defaultAttr, attr);
 
-    svgObject._addDependentAttribute(this, this.p1, function(p) {
+    svgObject.createDependency(this, this.p1, function(p) {
         return { x1: p.x, y1: p.y };
     });
-    svgObject._addDependentAttribute(this, this.p2, function(p) {
+    svgObject.createDependency(this, this.p2, function(p) {
         return { x2: p.x, y2: p.y };
     });
 }
@@ -224,7 +224,7 @@ var InteractiveCircle = function(svgObject, attr) {
 
     SVGElement.call(this, svgObject, defaultAttr, attr);
 
-    svgObject._addDependentAttribute(this, this.center, function(p) {
+    svgObject.createDependency(this, this.center, function(p) {
         return { cx: p.x, cy: p.y };
     });
 };
@@ -346,12 +346,19 @@ InteractiveSVG.prototype._getDependentPoint = function(parent, attr, name) {
     return point;
 };
 
-InteractiveSVG.prototype._addDependentAttribute = function(dependentObj, controlPoint, updateFunction) {
+// Make dependentObject depend on controlObjects, so when controlObjects is updated, 
+// dependentObject is also updated, sending the result of the updateFunction
+InteractiveSVG.prototype.createDependency = function(dependentObject, controlObjects, updateFunction) {
+    if (!Array.isArray(controlObjects)) { controlObjects = [controlObjects]}
+
     // If point is an InteractiveSVG object, then make the parent dependent on it
-    if (controlPoint.dependents) {
-        controlPoint.dependents.push(function() {
-            dependentObj.update(updateFunction(controlPoint));
-        });
+    for (var i = 0; i < controlObjects.length; i++) {
+        var controlObject = controlObjects[i];
+        if (controlObject.dependents) {
+            controlObject.dependents.push(function() {
+                dependentObject.update(updateFunction(controlObject));
+            });
+        }
     }
 };
 

@@ -29,8 +29,8 @@
             var svg = InteractiveSVG.create('svg1', 400, 400);
             
             // Create circle for defining inversion
-            var center = svg.addStaticPoint({ x: 200, y: 200 });
-            svg.addCircle({ center: center, r: 100 });
+            var staticCenter = svg.addStaticPoint({ x: 200, y: 200 });
+            svg.addCircle({ center: staticCenter, r: 100, static: true });
 
             svg.addPoint({ label: 'A', x: 150, y: 100 });
             svg.addCircle({ center: 'A', r: 40 });
@@ -49,22 +49,21 @@
                 r: 4, static: true, class: 'point generated-point'
             });
 
-            var testForIntersection = function() {
+            // Make point E dependent on lines L1 and L2
+            canvas1.createDependency(E, [L1, L2], function(p) {
                 var intersection = lineLineIntersection(L1, L2);
                 if (intersection) {
                     L1.$element.attr("class", "line highlight-line");
                     L2.$element.attr("class", "line highlight-line");
-                    E.setPosition(intersection.x, intersection.y);
-                    E.$element.show();
+                    return {cx: intersection.x, cy: intersection.y, visibility: 'visible'};
                 } else {
                     L1.$element.attr("class", "line controllable-line");
                     L2.$element.attr("class", "line controllable-line");
-                    E.$element.hide();
+                    return { visibility: 'hidden' };
                 }
-            };
-            L1.onUpdate = testForIntersection;
-            L2.onUpdate = testForIntersection;
-            testForIntersection();
+            });
+            L1.update();
+
         })();
 
         var canvas2 = InteractiveSVG.createFromJSON({
