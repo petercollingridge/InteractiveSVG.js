@@ -102,6 +102,8 @@ var SVGElement = function(svgObject, defaultAttr, attr) {
     if (this.draggable) {
         svgObject._setAsDraggable(this);
     }
+
+    if (this.label) { svgObject.elements[this.label] = this; }
 };
 
 // Update the object with new attributes
@@ -145,8 +147,6 @@ var InteractivePoint = function(svgObject, attr) {
     }
 
     SVGElement.call(this, svgObject, defaultAttr, attr);
-
-    if (this.label) { svgObject.points[this.label] = this; }
 };
 
 InteractivePoint.prototype = Object.create(SVGElement.prototype);
@@ -183,7 +183,6 @@ var InteractiveLine = function(svgObject, attr) {
     };
 
     SVGElement.call(this, svgObject, defaultAttr, attr);
-    if (this.label) { svgObject.lines[this.label] = this; }
 
     svgObject._addDependentAttribute(this, this.p1, function(p) {
         return { x1: p.x, y1: p.y };
@@ -224,7 +223,6 @@ var InteractiveCircle = function(svgObject, attr) {
     };
 
     SVGElement.call(this, svgObject, defaultAttr, attr);
-    if (this.label) { svgObject.lines[this.label] = this; }
 
     svgObject._addDependentAttribute(this, this.center, function(p) {
         return { cx: p.x, cy: p.y };
@@ -246,8 +244,7 @@ var InteractiveSVG = function($container, width, height) {
         height: height || 400,
     }).appendTo($container);
 
-    this.points = {};
-    this.lines = {};
+    this.elements = {};
     this.selected = false;
     this._addMouseEventHandlers();
     this.$background = this._addBackground();
@@ -329,18 +326,12 @@ InteractiveSVG.prototype._setAsDraggable = function(element) {
     });
 }
 
-InteractiveSVG.prototype._getElement = function(type, label) {
-    var dictOfElements = this[type];
-
-    if (dictOfElements) {
-        var element = dictOfElements[label];
-        if (element) {
-            return element;
-        } else {
-            console.error("No such " + type + " element with name " + label);
-        }
+InteractiveSVG.prototype._getElement = function(label) {
+    var element = this.elements[label];
+    if (element) {
+        return element;
     } else {
-        console.error("No such element type " + type);
+        console.error("No such element with name " + label);
     }
 };
 
@@ -350,7 +341,7 @@ InteractiveSVG.prototype._getDependentPoint = function(parent, attr, name) {
     var point = attr[name] || { x: 0, y: 0 };
 
     // If point is a label then look it up in the points dictioanry
-    if (typeof point === 'string') { point = this._getElement('points', point); }
+    if (typeof point === 'string') { point = this._getElement(point); }
 
     return point;
 };
