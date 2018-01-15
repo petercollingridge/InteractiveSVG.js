@@ -43,7 +43,7 @@
 
             // Create circle that depends on three points
             var c = svg.addCircle({ center: {x: 200, y: 200}, r: 20, class: 'line generated-line' });
-            //svg.createDependency(c, ['C', 'D', 'E'], function(L1, L2) {});
+            svg.createDependency(c, ['C', 'D', 'E'], defineCircleFromThreePoints);
 
         })();
 

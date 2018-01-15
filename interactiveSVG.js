@@ -72,7 +72,7 @@ function defineCircleFromThreePoints(p1, p2, p3) {
     var dy = cy - p1.y;
     var r = Math.sqrt(dx * dx + dy * dy);
 
-    return {center: {x: cx, y: cy}, r: r};
+    return {cx: cx, cy: cy, r: r};
 }
 
 /*************************************************
@@ -361,14 +361,17 @@ InteractiveSVG.prototype._getPoint = function(parent, attr, name) {
 // Make dependentObject depend on controlObjects, so when controlObjects is updated, 
 // dependentObject is also updated, sending the result of the updateFunction
 InteractiveSVG.prototype.createDependency = function(dependentObject, controlObjects, updateFunction) {
-    if (!Array.isArray(controlObjects)) {
-        controlObjects = [controlObjects];
-    }
+    var getElement = this._getElement.bind(this);
+    dependentObject = getElement(dependentObject);
 
-    var getElement = this._getElement;
-    var controlObjects = controlObjects.map(function(element) {
-        return getElement(element);
-    });
+    // Ensure controlObject is an array of object
+    if (!Array.isArray(controlObjects)) {
+        controlObjects = [getElement(controlObjects)];
+    } else {
+        controlObjects = controlObjects.map(function(element) {
+            return getElement(element);
+        });
+    }
 
     var updateDependentObject = function() {
         dependentObject.update(updateFunction.apply(dependentObject, controlObjects));
