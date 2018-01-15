@@ -33,7 +33,8 @@
             svg.addCircle({ center: staticCenter, r: 100, static: true });
 
             svg.addPoint({ label: 'A', x: 150, y: 100 });
-            svg.addCircle({ center: 'A', r: 40 });
+            svg.addPoint({ label: 'B', x: 190, y: 100 });
+            svg.addCircle({ center: 'A', r: 'B' });
         })();
 
         (function() {
@@ -62,8 +63,6 @@
                     return { visibility: 'hidden' };
                 }
             });
-            L1.update();
-
         })();
 
         var canvas2 = InteractiveSVG.createFromJSON({

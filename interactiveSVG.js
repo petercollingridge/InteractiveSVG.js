@@ -175,11 +175,7 @@ var InteractiveLine = function(svgObject, attr) {
     delete attr.p2;
 
     var defaultAttr = {
-        class: 'line controllable-line',
-        x1: this.p1.x,
-        y1: this.p1.y,
-        x2: this.p2.x,
-        y2: this.p2.y
+        class: 'line controllable-line'
     };
 
     SVGElement.call(this, svgObject, defaultAttr, attr);
@@ -200,33 +196,40 @@ InteractiveLine.prototype = Object.create(SVGElement.prototype);
 
 var InteractiveCircle = function(svgObject, attr) {
     this.tagName = 'circle';
+    this.addBelow = true;
 
-    // Radius can be a number or determined by a point
-    this.r = attr.r || 20;
-    if (isNaN(this.r)) {
-        this.r = svgObject._getDependentPoint(this, attr, 'r');
-    }
-
-    // Center can be defined by a center attribute or x and y attributes
+    // If center not defined by a center attribute it could defined by x and y attributes
     if (!attr.center && attr.x !== undefined && attr.y !== undefined) {
         attr.center = { x: attr.x, y: attr.y };
     }
 
     this.center = svgObject._getDependentPoint(this, attr, 'center');
+    this.r = svgObject._getDependentPoint(this, attr, 'r');
     this.type = this.center.draggable ? 'controllable' : 'static';
     delete attr.center;
+    delete attr.r;
 
-    var defaultAttr = {
-        class: "line " + this.type + "-line",
-        cx: this.center.x,
-        cy: this.center.y,
-    };
+    var defaultAttr = { class: "line " + this.type + "-line" };
 
     SVGElement.call(this, svgObject, defaultAttr, attr);
 
     svgObject.createDependency(this, this.center, function(p) {
         return { cx: p.x, cy: p.y };
     });
+
+    // Radius can be a number or determined by a points
+    if (isNaN(this.r)) {
+        var center = this.center;
+
+        svgObject.createDependency(this, this.r, function(p) {
+            var dx = center.x - p.x;
+            var dy = center.y - p.y;
+            return { r: Math.sqrt(dx * dx + dy * dy) };
+        });
+    } else {
+        this.update({ r: this.r });
+    }
+
 };
 InteractiveCircle.prototype = Object.create(SVGElement.prototype);
 
@@ -360,6 +363,8 @@ InteractiveSVG.prototype.createDependency = function(dependentObject, controlObj
             });
         }
     }
+
+    dependentObject.update(updateFunction(controlObjects[0]));
 };
 
 InteractiveSVG.prototype.addPoint = function(attr) {
