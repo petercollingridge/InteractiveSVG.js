@@ -109,6 +109,7 @@ var SVGElement = function(svgObject, defaultAttr, attr) {
 // Update the object with new attributes
 SVGElement.prototype.update = function(attr) {
     if (attr) { this.$element.attr(attr); }
+    this._updateAttr(attr);
 
     for (var i = 0; i < this.dependents.length; i++) {
         this.dependents[i]();
@@ -116,6 +117,9 @@ SVGElement.prototype.update = function(attr) {
 
     this.onUpdate();
 };
+
+// Empty to be overwritten
+SVGElement.prototype._updateAttr = function() {};
 
 /*************************************************
  *      InteractivePoint
@@ -152,13 +156,13 @@ var InteractivePoint = function(svgObject, attr) {
 InteractivePoint.prototype = Object.create(SVGElement.prototype);
 
 InteractivePoint.prototype.move = function(dx, dy) {
-    this.setPosition(this.x + dx, this.y + dy);
+    this.update({cx: this.x + dx, cy: this.y + dy });
 };
 
-InteractivePoint.prototype.setPosition = function(x, y) {
-    this.x = x;
-    this.y = y;
-    this.update({ cx: x, cy: y });
+// Updating the element's cx and cy attributes should update the object x and y attributes
+SVGElement.prototype._updateAttr = function(attr) {
+    if (attr.cx !== undefined) { this.x = attr.cx; }
+    if (attr.cy !== undefined) { this.y = attr.cy; }
 };
 
 /*************************************************
@@ -219,13 +223,20 @@ var InteractiveCircle = function(svgObject, attr) {
 
     // Radius can be a number or determined by a points
     if (isNaN(this.r)) {
+        var r = this.r;
         var center = this.center;
 
+        // Radius of the circle is dependent on point this.r
         svgObject.createDependency(this, this.r, function(p) {
-            var dx = center.x - p.x;
-            var dy = center.y - p.y;
-            return { r: Math.sqrt(dx * dx + dy * dy) };
+            p.dx = p.x - center.x;
+            p.dy = p.y - center.y;
+            return { r: Math.sqrt(p.dx * p.dx + p.dy * p.dy) };
         });
+
+        // Point this.r is dependent on this.center
+        svgObject.createDependency(this.r, this.center, function(p) {
+            return { cx: center.x + r.dx, cy: center.y + r.dy };
+        });        
     } else {
         this.update({ r: this.r });
     }
