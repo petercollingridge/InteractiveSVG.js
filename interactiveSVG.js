@@ -173,8 +173,8 @@ SVGElement.prototype._updateAttr = function(attr) {
 var InteractiveLine = function(svgObject, attr) {
     this.tagName = "line";
     this.addBelow = true;
-    this.p1 = svgObject._getDependentPoint(this, attr, 'p1');
-    this.p2 = svgObject._getDependentPoint(this, attr, 'p2');
+    this.p1 = svgObject._getPoint(this, attr, 'p1');
+    this.p2 = svgObject._getPoint(this, attr, 'p2');
     delete attr.p1;
     delete attr.p2;
 
@@ -207,8 +207,8 @@ var InteractiveCircle = function(svgObject, attr) {
         attr.center = { x: attr.x, y: attr.y };
     }
 
-    this.center = svgObject._getDependentPoint(this, attr, 'center');
-    this.r = svgObject._getDependentPoint(this, attr, 'r');
+    this.center = svgObject._getPoint(this, attr, 'center');
+    this.r = svgObject._getPoint(this, attr, 'r');
     this.type = this.center.draggable ? 'controllable' : 'static';
     delete attr.center;
     delete attr.r;
@@ -217,25 +217,23 @@ var InteractiveCircle = function(svgObject, attr) {
 
     SVGElement.call(this, svgObject, defaultAttr, attr);
 
-    svgObject.createDependency(this, this.center, function(p) {
-        return { cx: p.x, cy: p.y };
+    // Circle coordinates depend on its center point
+    svgObject.createDependency(this, this.center, function(center) {
+        return { cx: center.x, cy: center.y };
     });
 
     // Radius can be a number or determined by a points
     if (isNaN(this.r)) {
-        var r = this.r;
-        var center = this.center;
-
         // Radius of the circle is dependent on point this.r
-        svgObject.createDependency(this, this.r, function(p) {
-            p.dx = p.x - center.x;
-            p.dy = p.y - center.y;
-            return { r: Math.sqrt(p.dx * p.dx + p.dy * p.dy) };
+        svgObject.createDependency(this, this.r, function(radiusPoint) {
+            radiusPoint.dx = radiusPoint.x - this.center.x;
+            radiusPoint.dy = radiusPoint.y - this.center.y;
+            return { r: Math.sqrt(radiusPoint.dx * radiusPoint.dx + radiusPoint.dy * radiusPoint.dy) };
         });
 
         // Point this.r is dependent on this.center
-        svgObject.createDependency(this.r, this.center, function(p) {
-            return { cx: center.x + r.dx, cy: center.y + r.dy };
+        svgObject.createDependency(this.r, this.center, function(center) {
+            return { cx: center.x + this.dx, cy: center.y + this.dy };
         });        
     } else {
         this.update({ r: this.r });
@@ -341,41 +339,50 @@ InteractiveSVG.prototype._setAsDraggable = function(element) {
 }
 
 InteractiveSVG.prototype._getElement = function(label) {
-    var element = this.elements[label];
-    if (element) {
-        return element;
+    // If label is a string then look it up in the points dictionary
+    if (typeof label === 'string') {
+        var element = this.elements[label];
+        if (element) {
+            return element;
+        } else {
+            console.error("No such element with name " + label);
+        }
     } else {
-        console.error("No such element with name " + label);
+        return label;
     }
 };
 
 // Given an attribute dictionary, look up point with given name
 // If the name is not a string, but an object, use that object for the point
-InteractiveSVG.prototype._getDependentPoint = function(parent, attr, name) {
-    var point = attr[name] || { x: 0, y: 0 };
-
-    // If point is a label then look it up in the points dictioanry
-    if (typeof point === 'string') { point = this._getElement(point); }
-
-    return point;
+InteractiveSVG.prototype._getPoint = function(parent, attr, name) {
+    return this._getElement(attr[name] || { x: 0, y: 0 });
 };
 
 // Make dependentObject depend on controlObjects, so when controlObjects is updated, 
 // dependentObject is also updated, sending the result of the updateFunction
 InteractiveSVG.prototype.createDependency = function(dependentObject, controlObjects, updateFunction) {
-    if (!Array.isArray(controlObjects)) { controlObjects = [controlObjects]}
+    if (!Array.isArray(controlObjects)) {
+        controlObjects = [controlObjects];
+    }
+
+    var getElement = this._getElement;
+    var controlObjects = controlObjects.map(function(element) {
+        return getElement(element);
+    });
+
+    var updateDependentObject = function() {
+        dependentObject.update(updateFunction.apply(dependentObject, controlObjects));
+    };
 
     // If point is an InteractiveSVG object, then make the parent dependent on it
     for (var i = 0; i < controlObjects.length; i++) {
-        var controlObject = controlObjects[i];
-        if (controlObject.dependents) {
-            controlObject.dependents.push(function() {
-                dependentObject.update(updateFunction(controlObject));
-            });
+        var dependentsArray = controlObjects[i].dependents;
+        if (dependentsArray) {
+            dependentsArray.push(updateDependentObject);
         }
     }
 
-    dependentObject.update(updateFunction(controlObjects[0]));
+    updateDependentObject();
 };
 
 InteractiveSVG.prototype.addPoint = function(attr) {
