@@ -84,6 +84,7 @@
             var C = svg.addPoint({ x: 200, y: 50 });
             var D = svg.addPoint({ x: 150, y: 160 });
             svg.addBezier({ p1: A, p2: B, p3: C, p4: D });
+            svg.addBezier({ p1: A, p2: B, p3: D });
         })();
 
         var canvas2 = InteractiveSVG.createFromJSON({

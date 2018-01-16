@@ -173,10 +173,8 @@ SVGElement.prototype._updateAttr = function(attr) {
 var InteractiveLine = function(svgObject, attr) {
     this.tagName = "line";
     this.addBelow = true;
-    this.p1 = svgObject._getPoint(this, attr, 'p1');
-    this.p2 = svgObject._getPoint(this, attr, 'p2');
-    delete attr.p1;
-    delete attr.p2;
+    this.p1 = svgObject._getPoint(attr, 'p1');
+    this.p2 = svgObject._getPoint(attr, 'p2');
 
     var defaultAttr = { class: 'line controllable-line' };
     SVGElement.call(this, svgObject, defaultAttr, attr);
@@ -199,26 +197,35 @@ InteractiveLine.prototype = Object.create(SVGElement.prototype);
 var InteractiveBezier = function(svgObject, attr) {
     this.tagName = "path";
     this.addBelow = true;
-    this.p1 = svgObject._getPoint(this, attr, 'p1');
-    this.p2 = svgObject._getPoint(this, attr, 'p2');
-    this.p3 = svgObject._getPoint(this, attr, 'p3');
-    this.p4 = svgObject._getPoint(this, attr, 'p4');
-    delete attr.p1;
-    delete attr.p2;
-    delete attr.p3;
-    delete attr.p4;
+    this.p1 = svgObject._getPoint(attr, 'p1');
+    this.p2 = svgObject._getPoint(attr, 'p2');
+    this.p3 = svgObject._getPoint(attr, 'p3');
+    
+    if (attr.p4) { this.p4 = svgObject._getPoint(attr, 'p4'); }
 
     var defaultAttr = { class: 'line controllable-line' };
     SVGElement.call(this, svgObject, defaultAttr, attr);
 
-    svgObject.createDependency(
-        this, [this.p1, this.p2, this.p3, this.p4], function(p1, p2, p3, p4) {
-            var d = "M" + p1.x + " " + p1.y;
-            d += "C" + p2.x + " " + p2.y;
-            d += " " + p3.x + " " + p3.y;
-            d += " " + p4.x + " " + p4.y;
-            return { d: d };
-    });
+    if (this.p4) {
+        // Cubic bezier
+        svgObject.createDependency(
+            this, [this.p1, this.p2, this.p3, this.p4], function(p1, p2, p3, p4) {
+                var d = "M" + p1.x + " " + p1.y;
+                d += "C" + p2.x + " " + p2.y;
+                d += " " + p3.x + " " + p3.y;
+                d += " " + p4.x + " " + p4.y;
+                return { d: d };
+        });
+    } else {
+        // Quadratic bezier
+        svgObject.createDependency(
+            this, [this.p1, this.p2, this.p3], function(p1, p2, p3) {
+                var d = "M" + p1.x + " " + p1.y;
+                d += "S" + p2.x + " " + p2.y;
+                d += " " + p3.x + " " + p3.y;
+                return { d: d };
+        });
+    }
 }
 InteractiveBezier.prototype = Object.create(SVGElement.prototype);
 
@@ -236,11 +243,9 @@ var InteractiveCircle = function(svgObject, attr) {
         attr.center = { x: attr.x, y: attr.y };
     }
 
-    this.center = svgObject._getPoint(this, attr, 'center');
-    this.r = svgObject._getPoint(this, attr, 'r');
+    this.center = svgObject._getPoint(attr, 'center');
+    this.r = svgObject._getPoint(attr, 'r');
     this.type = this.center.draggable ? 'controllable' : 'static';
-    delete attr.center;
-    delete attr.r;
 
     var defaultAttr = { class: "line " + this.type + "-line" };
 
@@ -380,10 +385,11 @@ InteractiveSVG.prototype._getElement = function(label) {
     }
 };
 
-// Given an attribute dictionary, look up point with given name
-// If the name is not a string, but an object, use that object for the point
-InteractiveSVG.prototype._getPoint = function(parent, attr, name) {
-    return this._getElement(attr[name] || { x: 0, y: 0 });
+// Given a label as a name in an attr hash return the point or a default
+InteractiveSVG.prototype._getPoint = function(attr, name) {
+    var label = attr[name];
+    delete attr[name];
+    return label ? this._getElement(label) : { x: 0, y: 0 };
 };
 
 // Make dependentObject depend on controlObjects, so when controlObjects is updated, 
