@@ -23,6 +23,7 @@
     <div id="svg1" class="svg-wrapper"></div>
     <div id="svg2" class="svg-wrapper"></div>
     <div id="svg3" class="svg-wrapper"></div>
+    <div id="svg4" class="svg-wrapper"></div>
 
     <script type="text/javascript">
         (function() {
@@ -75,8 +76,18 @@
             });
         })();
 
+
+        (function() {
+            var svg = InteractiveSVG.create('svg3', 300, 300);
+            var A = svg.addPoint({ x: 100, y: 150 });
+            var B = svg.addPoint({ x: 50, y: 25 });
+            var C = svg.addPoint({ x: 200, y: 50 });
+            var D = svg.addPoint({ x: 150, y: 160 });
+            svg.addBezier({ p1: A, p2: B, p3: C, p4: D });
+        })();
+
         var canvas2 = InteractiveSVG.createFromJSON({
-            id: 'svg3',
+            id: 'svg4',
             width: 300,
             height: 200,
             points: [

@@ -178,10 +178,7 @@ var InteractiveLine = function(svgObject, attr) {
     delete attr.p1;
     delete attr.p2;
 
-    var defaultAttr = {
-        class: 'line controllable-line'
-    };
-
+    var defaultAttr = { class: 'line controllable-line' };
     SVGElement.call(this, svgObject, defaultAttr, attr);
 
     svgObject.createDependency(this, this.p1, function(p) {
@@ -192,6 +189,38 @@ var InteractiveLine = function(svgObject, attr) {
     });
 }
 InteractiveLine.prototype = Object.create(SVGElement.prototype);
+
+/*************************************************
+ *      InteractiveBezier
+ *  A cubic Bezier path between two draggable points
+ *  with two draggable control points.
+**************************************************/
+
+var InteractiveBezier = function(svgObject, attr) {
+    this.tagName = "path";
+    this.addBelow = true;
+    this.p1 = svgObject._getPoint(this, attr, 'p1');
+    this.p2 = svgObject._getPoint(this, attr, 'p2');
+    this.p3 = svgObject._getPoint(this, attr, 'p3');
+    this.p4 = svgObject._getPoint(this, attr, 'p4');
+    delete attr.p1;
+    delete attr.p2;
+    delete attr.p3;
+    delete attr.p4;
+
+    var defaultAttr = { class: 'line controllable-line' };
+    SVGElement.call(this, svgObject, defaultAttr, attr);
+
+    svgObject.createDependency(
+        this, [this.p1, this.p2, this.p3, this.p4], function(p1, p2, p3, p4) {
+            var d = "M" + p1.x + " " + p1.y;
+            d += "C" + p2.x + " " + p2.y;
+            d += " " + p3.x + " " + p3.y;
+            d += " " + p4.x + " " + p4.y;
+            return { d: d };
+    });
+}
+InteractiveBezier.prototype = Object.create(SVGElement.prototype);
 
 /*************************************************
  *      InteractiveCircle
@@ -238,7 +267,6 @@ var InteractiveCircle = function(svgObject, attr) {
     } else {
         this.update({ r: this.r });
     }
-
 };
 InteractiveCircle.prototype = Object.create(SVGElement.prototype);
 
@@ -399,6 +427,10 @@ InteractiveSVG.prototype.addStaticPoint = function(attr) {
 
 InteractiveSVG.prototype.addLine = function(attr) {
     return new InteractiveLine(this, attr);
+};
+
+InteractiveSVG.prototype.addBezier = function(attr) {
+    return new InteractiveBezier(this, attr);
 };
 
 InteractiveSVG.prototype.addCircle = function(attr) {
