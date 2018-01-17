@@ -60,10 +60,12 @@
 
 .interactiveSVG .static-point {
     fill: rgb(120, 120, 120);
+    pointer-events: none;
 }
 
 .interactiveSVG .static-line {
     stroke: rgb(120, 120, 120);
     stroke-width: 1px;
+    pointer-events: none;
 }
 
