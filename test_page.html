@@ -24,6 +24,7 @@
     <div id="svg2" class="svg-wrapper"></div>
     <div id="svg3" class="svg-wrapper"></div>
     <div id="svg4" class="svg-wrapper"></div>
+    <div id="svg5" class="svg-wrapper"></div>
 
     <script type="text/javascript">
         (function() {
@@ -44,8 +45,7 @@
 
             // Create circle that depends on three points
             var c = svg.addCircle({ center: {x: 200, y: 200}, r: 20, class: 'line generated-line' });
-            svg.createDependency(c, ['C', 'D', 'E'], defineCircleFromThreePoints);
-
+            c.addDependency(['C', 'D', 'E'], defineCircleFromThreePoints);
         })();
 
         (function() {
@@ -57,25 +57,25 @@
             var L1 = canvas1.addLine({ p1: A, p2: B });
             var L2 = canvas1.addLine({ p1: C, p2: D });
 
-            var E = canvas1.addPoint({
-                r: 4, static: true, class: 'point generated-point'
-            });
-
             // Make point E dependent on lines L1 and L2
-            canvas1.createDependency(E, [L1, L2], function(L1, L2) {
-                var intersection = lineLineIntersection(L1, L2);
-                if (intersection) {
-                    L1.$element.attr("class", "line highlight-line");
-                    L2.$element.attr("class", "line highlight-line");
-                    return {cx: intersection.x, cy: intersection.y, visibility: 'visible'};
-                } else {
-                    L1.$element.attr("class", "line controllable-line");
-                    L2.$element.attr("class", "line controllable-line");
-                    return { visibility: 'hidden' };
+            canvas1.addPoint({
+                r: 4, static: true, class: 'point generated-point'
+            }).addDependency(
+                [L1, L2],
+                function(L1, L2) {
+                    var intersection = lineLineIntersection(L1, L2);
+                    if (intersection) {
+                        L1.$element.attr("class", "line highlight-line");
+                        L2.$element.attr("class", "line highlight-line");
+                        return {cx: intersection.x, cy: intersection.y, visibility: 'visible'};
+                    } else {
+                        L1.$element.attr("class", "line controllable-line");
+                        L2.$element.attr("class", "line controllable-line");
+                        return { visibility: 'hidden' };
+                    }
                 }
-            });
+            );
         })();
-
 
         (function() {
             var svg = InteractiveSVG.create('svg3', 300, 300);
@@ -103,6 +103,14 @@
                 { x: 125, y: 50, r: 30 }
             ]
         });
+
+(function() {
+    var svg = InteractiveSVG.create('svg5', 200, 200);
+    var A = svg.addPoint({ x: 80, y: 100 });
+    svg.addPoint({ label: 'B', x: 120, y: 100 });
+    A.update({r: 20});
+    svg.elements.B.$element.addClass("highlight-point");
+})();
     </script>
 </body>
 </html>

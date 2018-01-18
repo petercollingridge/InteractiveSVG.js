@@ -81,6 +81,8 @@ function defineCircleFromThreePoints(p1, p2, p3) {
 **************************************************/
 
 var SVGElement = function(svgObject, defaultAttr, attr) {
+    this.svg = svgObject;
+
     // Called when the element is updated
     // Empty but can be overwritten
     this.onUpdate = function() {};
@@ -116,6 +118,11 @@ SVGElement.prototype.update = function(attr) {
     }
 
     this.onUpdate();
+};
+
+// Make this element dependent on another with an update function
+SVGElement.prototype.addDependency = function(controlObjects, updateFunction) {
+    this.svg.addDependency(this, controlObjects, updateFunction);
 };
 
 // Empty to be overwritten
@@ -179,10 +186,10 @@ var InteractiveLine = function(svgObject, attr) {
     var defaultAttr = { class: 'line controllable-line' };
     SVGElement.call(this, svgObject, defaultAttr, attr);
 
-    svgObject.createDependency(this, this.p1, function(p) {
+    this.addDependency(this.p1, function(p) {
         return { x1: p.x, y1: p.y };
     });
-    svgObject.createDependency(this, this.p2, function(p) {
+    this.addDependency(this.p2, function(p) {
         return { x2: p.x, y2: p.y };
     });
 }
@@ -208,8 +215,9 @@ var InteractiveBezier = function(svgObject, attr) {
 
     if (this.p4) {
         // Cubic bezier
-        svgObject.createDependency(
-            this, [this.p1, this.p2, this.p3, this.p4], function(p1, p2, p3, p4) {
+        this.addDependency(
+            [this.p1, this.p2, this.p3, this.p4],
+            function(p1, p2, p3, p4) {
                 var d = "M" + p1.x + " " + p1.y;
                 d += "C" + p2.x + " " + p2.y;
                 d += " " + p3.x + " " + p3.y;
@@ -218,8 +226,9 @@ var InteractiveBezier = function(svgObject, attr) {
         });
     } else {
         // Quadratic bezier
-        svgObject.createDependency(
-            this, [this.p1, this.p2, this.p3], function(p1, p2, p3) {
+        this.addDependency(
+            [this.p1, this.p2, this.p3],
+            function(p1, p2, p3) {
                 var d = "M" + p1.x + " " + p1.y;
                 d += "S" + p2.x + " " + p2.y;
                 d += " " + p3.x + " " + p3.y;
@@ -252,21 +261,21 @@ var InteractiveCircle = function(svgObject, attr) {
     SVGElement.call(this, svgObject, defaultAttr, attr);
 
     // Circle coordinates depend on its center point
-    svgObject.createDependency(this, this.center, function(center) {
+    this.addDependency(this.center, function(center) {
         return { cx: center.x, cy: center.y };
     });
 
     // Radius can be a number or determined by a points
     if (isNaN(this.r)) {
         // Radius of the circle is dependent on point this.r
-        svgObject.createDependency(this, this.r, function(radiusPoint) {
+        this.addDependency(this.r, function(radiusPoint) {
             radiusPoint.dx = radiusPoint.x - this.center.x;
             radiusPoint.dy = radiusPoint.y - this.center.y;
             return { r: Math.sqrt(radiusPoint.dx * radiusPoint.dx + radiusPoint.dy * radiusPoint.dy) };
         });
 
         // Point this.r is dependent on this.center
-        svgObject.createDependency(this.r, this.center, function(center) {
+        this.r.addDependency(this.center, function(center) {
             return { cx: center.x + this.dx, cy: center.y + this.dy };
         });        
     } else {
@@ -394,11 +403,11 @@ InteractiveSVG.prototype._getPoint = function(attr, name) {
 
 // Make dependentObject depend on controlObjects, so when controlObjects is updated, 
 // dependentObject is also updated, sending the result of the updateFunction
-InteractiveSVG.prototype.createDependency = function(dependentObject, controlObjects, updateFunction) {
+InteractiveSVG.prototype.addDependency = function(dependentObject, controlObjects, updateFunction) {
     var getElement = this._getElement.bind(this);
     dependentObject = getElement(dependentObject);
 
-    // Ensure controlObject is an array of object
+    // Ensure controlObject is an array of objects
     if (!Array.isArray(controlObjects)) {
         controlObjects = [getElement(controlObjects)];
     } else {
