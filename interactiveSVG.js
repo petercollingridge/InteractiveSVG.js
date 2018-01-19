@@ -186,12 +186,17 @@ var InteractiveLine = function(svgObject, attr) {
     var defaultAttr = { class: 'line controllable-line' };
     SVGElement.call(this, svgObject, defaultAttr, attr);
 
-    this.addDependency(this.p1, function(p) {
-        return { x1: p.x, y1: p.y };
-    });
-    this.addDependency(this.p2, function(p) {
-        return { x2: p.x, y2: p.y };
-    });
+    if (this.p1) {
+        this.addDependency(this.p1, function(p) {
+            return { x1: p.x, y1: p.y };
+        });
+    }
+
+    if (this.p2) {
+        this.addDependency(this.p2, function(p) {
+            return { x2: p.x, y2: p.y };
+        });
+    }
 }
 InteractiveLine.prototype = Object.create(SVGElement.prototype);
 
@@ -398,7 +403,7 @@ InteractiveSVG.prototype._getElement = function(label) {
 InteractiveSVG.prototype._getPoint = function(attr, name) {
     var label = attr[name];
     delete attr[name];
-    return label ? this._getElement(label) : { x: 0, y: 0 };
+    return this._getElement(label);
 };
 
 // Make dependentObject depend on controlObjects, so when controlObjects is updated, 
