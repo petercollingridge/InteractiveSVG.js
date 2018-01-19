@@ -441,6 +441,9 @@ InteractiveSVG.prototype.addStaticPoint = function(attr) {
 };
 
 InteractiveSVG.prototype.addLine = function(attr) {
+    if (Array.isArray(attr)) {
+        attr = { p1: attr[0], p2: attr[1] };
+    }
     return new InteractiveLine(this, attr);
 };
 
