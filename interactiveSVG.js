@@ -183,7 +183,13 @@ var InteractiveLine = function(svgObject, attr) {
     this.p1 = svgObject._getPoint(attr, 'p1');
     this.p2 = svgObject._getPoint(attr, 'p2');
 
-    var defaultAttr = { class: 'line controllable-line' };
+    var defaultAttr = { class: "line" };
+    if ((this.p1 && this.p1.draggable) || (this.p2 && this.p2.draggable)) {
+        defaultAttr.class += " controllable-line";
+    } else {
+        defaultAttr.class += " static-line";
+    }
+    
     SVGElement.call(this, svgObject, defaultAttr, attr);
 
     if (this.p1) {
@@ -197,6 +203,7 @@ var InteractiveLine = function(svgObject, attr) {
             return { x2: p.x, y2: p.y };
         });
     }
+
 }
 InteractiveLine.prototype = Object.create(SVGElement.prototype);
 
