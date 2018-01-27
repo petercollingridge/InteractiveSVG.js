@@ -25,6 +25,8 @@
     <div id="svg3" class="svg-wrapper"></div>
     <div id="svg4" class="svg-wrapper"></div>
     <div id="svg5" class="svg-wrapper"></div>
+    <div id="svg6" class="svg-wrapper"></div>
+    <div id="svg7" class="svg-wrapper"></div>
 
     <script type="text/javascript">
         (function() {
@@ -49,7 +51,7 @@
         })();
 
         (function() {
-            var canvas1 = InteractiveSVG.create('svg2', 300, 300);
+            var canvas1 = InteractiveSVG.create('svg2', 240, 200);
             var A = canvas1.addPoint({ x: 100, y: 150 });
             var B = canvas1.addPoint({ x: 200, y: 50 });
             var C = canvas1.addPoint({ x: 50, y: 25 });
@@ -78,7 +80,7 @@
         })();
 
         (function() {
-            var svg = InteractiveSVG.create('svg3', 300, 300);
+            var svg = InteractiveSVG.create('svg3', 240, 200);
             var A = svg.addPoint({ x: 100, y: 150 });
             var B = svg.addPoint({ x: 50, y: 25 });
             var C = svg.addPoint({ x: 200, y: 50 });
@@ -110,6 +112,74 @@
     svg.addPoint({ label: 'B', x: 120, y: 100 });
     A.update({r: 20});
     svg.elements.B.$element.addClass("highlight-point");
+})();
+
+// Line example
+(function() {
+    var svg = InteractiveSVG.create('svg6', 200, 200);
+    var A = svg.addPoint({ x: 40, y: 75 });
+    svg.addPoint({ label: 'B', x: 160, y: 75 });
+    svg.addLine({p1: A, p2: 'B'});
+    svg.addLine({p1: A, p2: {x: 40, y: 160}});
+    svg.addLine({x1: 160, y1: 160, p2: 'B'});
+    svg.addLine({x1: 30, y1: 175, x2: 170, y2: 175});
+    svg.addLine([A, {x: 100, y: 25}, 'B'])
+})();
+
+(function() {
+    var svg = InteractiveSVG.create('svg6', 200, 200);
+    var A = svg.addPoint({ x: 40, y: 50 });
+    var B = svg.addPoint({ x: 160, y: 50 });
+    var C = svg.addPoint({ x: 100, y: 120 });
+    svg.addLine({p1: A, p2: B});
+    var D = svg.addCircle({center: C, r: 60});
+
+    var I1 = svg.addStaticPoint({ x: 100, y: 120, visibility: 'hidden', r: 4, class: 'point generated-point'});
+    var I2 = svg.addStaticPoint({ x: 100, y: 120, visibility: 'hidden', r: 4, class: 'point generated-point'});
+
+    var circleLineIntersection = function() {
+        var dx = A.x - B.x;
+        var dy = A.y - B.y;
+        var dx2 = B.x - C.x;
+        var dy2 = B.y - C.y;
+
+        var a = dx * dx + dy * dy;
+        var b = dx * dx2 + dy * dy2;
+        var c = dx2 * dx2 + dy2 * dy2 - D.r * D.r;
+
+        var discriminant = b * b - a * c;
+
+        if (discriminant > 0) {
+            discriminant = Math.sqrt(discriminant);
+            
+            var t = (-b - discriminant) / a;
+            if (t >= 0 && t <= 1) {
+                var x = B.x + t * dx;
+                var y = B.y + t * dy;
+                I1.update({cx: x, cy: y, visibility: 'visble'});
+            } else {
+                I1.update({visibility: 'hidden'});
+            }
+
+            var t = (-b + discriminant) / a;
+            if (t >= 0 && t <= 1) {
+                var x = B.x + t * dx;
+                var y = B.y + t * dy;
+                I2.update({cx: x, cy: y, visibility: 'visble'});
+            } else {
+                I2.update({visibility: 'hidden'});
+            }
+        } else {
+            I1.update({visibility: 'hidden'});
+            I2.update({visibility: 'hidden'});
+        }
+
+    };
+
+    A.dependents.push(circleLineIntersection);
+    B.dependents.push(circleLineIntersection);
+    C.dependents.push(circleLineIntersection);
+
 })();
     </script>
 </body>

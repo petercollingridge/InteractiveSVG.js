@@ -203,8 +203,7 @@ var InteractiveLine = function(svgObject, attr) {
             return { x2: p.x, y2: p.y };
         });
     }
-
-}
+};
 InteractiveLine.prototype = Object.create(SVGElement.prototype);
 
 /*************************************************
@@ -247,7 +246,7 @@ var InteractiveBezier = function(svgObject, attr) {
                 return { d: d };
         });
     }
-}
+};
 InteractiveBezier.prototype = Object.create(SVGElement.prototype);
 
 /*************************************************
@@ -345,7 +344,7 @@ InteractiveSVG._addFromJSON = function(addFunction, arr) {
             addFunction(arr[i]);
         }
     }
-}
+};
 
 InteractiveSVG.prototype._addBackground = function() {
     return this.addElement('rect', {
@@ -390,9 +389,9 @@ InteractiveSVG.prototype._setAsDraggable = function(element) {
         self.dragX = evt.clientX;
         self.dragY = evt.clientY;
     });
-}
+};
 
-InteractiveSVG.prototype._getElement = function(label) {
+InteractiveSVG.prototype.getElement = function(label) {
     // If label is a string then look it up in the points dictionary
     if (typeof label === 'string') {
         var element = this.elements[label];
@@ -410,13 +409,13 @@ InteractiveSVG.prototype._getElement = function(label) {
 InteractiveSVG.prototype._getPoint = function(attr, name) {
     var label = attr[name];
     delete attr[name];
-    return this._getElement(label);
+    return this.getElement(label);
 };
 
 // Make dependentObject depend on controlObjects, so when controlObjects is updated, 
 // dependentObject is also updated, sending the result of the updateFunction
 InteractiveSVG.prototype.addDependency = function(dependentObject, controlObjects, updateFunction) {
-    var getElement = this._getElement.bind(this);
+    var getElement = this.getElement.bind(this);
     dependentObject = getElement(dependentObject);
 
     // Ensure controlObject is an array of objects
@@ -454,8 +453,15 @@ InteractiveSVG.prototype.addStaticPoint = function(attr) {
 
 InteractiveSVG.prototype.addLine = function(attr) {
     if (Array.isArray(attr)) {
-        attr = { p1: attr[0], p2: attr[1] };
+        var i, lines = [];
+        for (i = 1; i < attr.length; i++) {
+            lines.push(
+                new InteractiveLine(this, { p1: attr[i - 1], p2: attr[i] })
+            );
+        }
+        return lines;
     }
+
     return new InteractiveLine(this, attr);
 };
 
