@@ -264,9 +264,12 @@ var InteractiveCircle = function(svgObject, attr) {
     }
 
     this.center = svgObject._getPoint(attr, 'center');
+    if (!this.center) {
+        this.center = { x: attr.cx || 0, y: attr.cy || 0 };
+    }
     this.r = svgObject._getPoint(attr, 'r');
-    this.type = this.center.draggable ? 'controllable' : 'static';
-
+    
+    this.type = (this.center.draggable || this.r.draggable) ? 'controllable' : 'static';
     var defaultAttr = { class: "line " + this.type + "-line" };
 
     SVGElement.call(this, svgObject, defaultAttr, attr);
@@ -288,7 +291,7 @@ var InteractiveCircle = function(svgObject, attr) {
         // Point this.r is dependent on this.center
         this.r.addDependency(this.center, function(center) {
             return { cx: center.x + this.dx, cy: center.y + this.dy };
-        });        
+        });
     } else {
         this.update({ r: this.r });
     }
