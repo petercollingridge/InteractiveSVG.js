@@ -218,7 +218,7 @@ var InteractiveBezier = function(svgObject, attr) {
     this.p1 = svgObject._getPoint(attr, 'p1');
     this.p2 = svgObject._getPoint(attr, 'p2');
     this.p3 = svgObject._getPoint(attr, 'p3');
-    
+
     if (attr.p4) { this.p4 = svgObject._getPoint(attr, 'p4'); }
 
     var defaultAttr = { class: 'line controllable-line' };
@@ -268,7 +268,7 @@ var InteractiveCircle = function(svgObject, attr) {
         this.center = { x: attr.cx || 0, y: attr.cy || 0 };
     }
     this.r = svgObject._getPoint(attr, 'r');
-    
+
     this.type = (this.center.draggable || this.r.draggable) ? 'controllable' : 'static';
     var defaultAttr = { class: "line " + this.type + "-line" };
 
@@ -469,6 +469,13 @@ InteractiveSVG.prototype.addLine = function(attr) {
 };
 
 InteractiveSVG.prototype.addBezier = function(attr) {
+    if (Array.isArray(attr)) {
+        var i, newAttr = {};
+        for (i = 0; i < attr.length; i++) {
+            newAttr['p' + (i + 1)] = attr[i];
+        }
+        attr = newAttr;
+    }
     return new InteractiveBezier(this, attr);
 };
 

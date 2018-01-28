@@ -80,16 +80,6 @@
             );
         })();
 
-        (function() {
-            var svg = InteractiveSVG.create('svg3', 240, 200);
-            var A = svg.addPoint({ x: 100, y: 150 });
-            var B = svg.addPoint({ x: 50, y: 25 });
-            var C = svg.addPoint({ x: 200, y: 50 });
-            var D = svg.addPoint({ x: 150, y: 160 });
-            svg.addBezier({ p1: A, p2: B, p3: C, p4: D });
-            svg.addBezier({ p1: A, p2: B, p3: D });
-        })();
-
         var canvas2 = InteractiveSVG.createFromJSON({
             id: 'svg4',
             width: 300,
@@ -135,9 +125,18 @@
     svg.addCircle({ center: A, r: B });
     svg.addCircle({ center: {x: 150, y: 50}, r: 30 });
     svg.addCircle({ cx: 50, cy: 150, r: 30 });
-    
     svg.addPoint({ label: 'C', x: 120, y: 150 });
     svg.addCircle({ cx: 150, cy: 150, r: 'C' });
+})();
+
+
+// Bezier example
+(function() {
+    var svg = InteractiveSVG.create('svg3', 240, 200);
+    var A = svg.addPoint({ x: 40, y: 160 });
+    svg.addPoint({ label: 'B', x: 120, y: 25 });
+    svg.addBezier({ p1: A, p2: 'B', p3: { x: 200, y: 160 } });
+    svg.addBezier([A, {x: 25, y: 50}, {x: 175, y: 100}, 'B' ]);
 })();
 
 (function() {
