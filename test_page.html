@@ -20,6 +20,7 @@
     <p>This page contains multiple inline SVGs to make sure they don't interact with one another.</p>
 
     <p>Here is the first</p>
+    <div id="svg0" class="svg-wrapper"></div>
     <div id="svg1" class="svg-wrapper"></div>
     <div id="svg2" class="svg-wrapper"></div>
     <div id="svg3" class="svg-wrapper"></div>
@@ -48,7 +49,7 @@
             svg.addPoint({ label: 'E', x: 180, y: 200 });
 
             // Create circle that depends on three points
-            var c = svg.addCircle({ center: {x: 200, y: 200}, r: 20, class: 'line generated-line' });
+            var c = svg.addCircle({ center: {x: 200, y: 200}, r: 20, class: 'generated-line' });
             c.addDependency(['C', 'D', 'E'], defineCircleFromThreePoints);
         })();
 
@@ -63,7 +64,7 @@
 
             // Make point E dependent on lines L1 and L2
             canvas1.addPoint({
-                r: 4, static: true, class: 'point generated-point'
+                r: 4, static: true, class: 'generated-point'
             }).addDependency(
                 [L1, L2],
                 function(L1, L2) {
@@ -71,7 +72,7 @@
                     if (intersection) {
                         L1.$element.attr("class", "line highlight-line");
                         L2.$element.attr("class", "line highlight-line");
-                        return {cx: intersection.x, cy: intersection.y, visibility: 'visible'};
+                        return { cx: intersection.x, cy: intersection.y, visibility: 'visible' };
                     } else {
                         L1.$element.attr("class", "line controllable-line");
                         L2.$element.attr("class", "line controllable-line");
@@ -97,6 +98,15 @@
                 { x: 125, y: 50, r: 30 }
             ]
         });
+
+// Point example
+(function() {
+    var svg = InteractiveSVG.create('svg0', 200, 200);
+    svg.addPoint({ x: 50, y: 50 });
+    svg.addPoint({ x: 150, y: 50, static: true });
+    svg.addPoint({ x: 50, y: 150, r: 10 });
+    svg.addPoint({ x: 150, y: 150, class: 'controllable-point' });
+})();
 
 (function() {
     var svg = InteractiveSVG.create('svg5', 200, 200);

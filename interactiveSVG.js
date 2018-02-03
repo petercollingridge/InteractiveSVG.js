@@ -80,7 +80,7 @@ function defineCircleFromThreePoints(p1, p2, p3) {
  *  A object that wraps an SVG element.
 **************************************************/
 
-var SVGElement = function(svgObject, defaultAttr, attr) {
+var SVGElement = function(svgObject, reservedAttributes, attributes) {
     this.svg = svgObject;
 
     // Called when the element is updated
@@ -90,15 +90,20 @@ var SVGElement = function(svgObject, defaultAttr, attr) {
     // Array of object to update when this is updated
     this.dependents = [];
 
-    this.label = attr.label;
-    delete attr.label;
+    // Set default attributes
+    for (var i = 0; i < reservedAttributes.length; i++) {
+        var attributeName = reservedAttributes[i];
+        if (attributes[attributeName] !== undefined) {
+            this[attributeName] = attributes[attributeName];
+            delete attributes[attributeName];
+        }
+    }
 
     // Create new SVG element
-    $.extend(defaultAttr, attr);
     if (this.addBelow) {
-        this.$element = svgObject.addElementToBottom(this.tagName, defaultAttr);
+        this.$element = svgObject.addElementToBottom(this.tagName, attributes);
     } else {
-        this.$element = svgObject.addElement(this.tagName, defaultAttr);
+        this.$element = svgObject.addElement(this.tagName, attributes);
     }
 
     if (this.draggable) {
@@ -109,9 +114,9 @@ var SVGElement = function(svgObject, defaultAttr, attr) {
 };
 
 // Update the object with new attributes
-SVGElement.prototype.update = function(attr) {
-    if (attr) { this.$element.attr(attr); }
-    this._updateAttr(attr);
+SVGElement.prototype.update = function(attributes) {
+    if (attributes) { this.$element.attr(attributes); }
+    this._updateAttr(attributes);
 
     for (var i = 0; i < this.dependents.length; i++) {
         this.dependents[i]();
@@ -128,48 +133,49 @@ SVGElement.prototype.addDependency = function(controlObjects, updateFunction) {
 // Empty to be overwritten
 SVGElement.prototype._updateAttr = function() {};
 
+SVGElement.prototype._setAttrIfNotYetSet = function(attributes) {
+    var el = this.$element[0];
+    for (var attributeName in attributes) {
+        if (!el.hasAttribute(attributeName)) {
+            this.$element.attr(attributeName, attributes[attributeName]);
+        }
+    }
+};
+
 /*************************************************
  *      InteractivePoint
  *  An SVG circle which can be draggable.
 **************************************************/
 
-var InteractivePoint = function(svgObject, attr) {
+var InteractivePoint = function(svgObject, attributes) {
     this.tagName = "circle";
-    this.x = attr.x || 0;
-    this.y = attr.y || 0;
-    this.draggable = !attr.static;
+    this.draggable = !attributes.static;
+    var reservedAttributes = ['label', 'x', 'y', 'static'];
+    
+    SVGElement.call(this, svgObject, reservedAttributes, attributes);
+ 
+    // Set attributes
+    this._setAttrIfNotYetSet({
+        'cx': this.x || 0,
+        'cy': this.y || 0,
+        'r': this.draggable ? 6 : 3,
+        'class': this.draggable ? "draggable-point" : "static-point"
+    });
 
-    delete attr.x;
-    delete attr.y;
-    delete attr.static;
-
-    var defaultAttr = {
-        cx: this.x,
-        cy: this.y,
-        class: "point"
-    };
-
-    if (this.draggable) {
-        defaultAttr.r = 6;
-        defaultAttr.class += " draggable-point";
-    } else {
-        defaultAttr.r = 3;
-        defaultAttr.class += " static-point";
-    }
-
-    SVGElement.call(this, svgObject, defaultAttr, attr);
+    // Set classes
+    this.$element.addClass("point");
 };
 
 InteractivePoint.prototype = Object.create(SVGElement.prototype);
 
 InteractivePoint.prototype.move = function(dx, dy) {
-    this.update({cx: this.x + dx, cy: this.y + dy });
+    this.update({ cx: this.x + dx, cy: this.y + dy });
 };
 
 // Updating the element's cx and cy attributes should update the object x and y attributes
-SVGElement.prototype._updateAttr = function(attr) {
-    if (attr.cx !== undefined) { this.x = attr.cx; }
-    if (attr.cy !== undefined) { this.y = attr.cy; }
+SVGElement.prototype._updateAttr = function(attributes) {
+    if (attributes.cx !== undefined) { this.x = attributes.cx; }
+    if (attributes.cy !== undefined) { this.y = attributes.cy; }
 };
 
 /*************************************************
@@ -177,32 +183,32 @@ SVGElement.prototype._updateAttr = function(attr) {
  *  A line between two draggable points
 **************************************************/
 
-var InteractiveLine = function(svgObject, attr) {
+var InteractiveLine = function(svgObject, attributes) {
     this.tagName = "line";
     this.addBelow = true;
-    this.p1 = svgObject._getPoint(attr, 'p1');
-    this.p2 = svgObject._getPoint(attr, 'p2');
+    var reservedAttributes = ['label', 'p1', 'p2'];
 
-    var defaultAttr = { class: "line" };
-    if ((this.p1 && this.p1.draggable) || (this.p2 && this.p2.draggable)) {
-        defaultAttr.class += " controllable-line";
-    } else {
-        defaultAttr.class += " static-line";
-    }
-    
-    SVGElement.call(this, svgObject, defaultAttr, attr);
+    SVGElement.call(this, svgObject, reservedAttributes, attributes);
 
+    // Create points
     if (this.p1) {
+        this.p1 = svgObject.getElement(this.p1);
         this.addDependency(this.p1, function(p) {
             return { x1: p.x, y1: p.y };
         });
     }
 
     if (this.p2) {
+        this.p2 = svgObject.getElement(this.p2);
         this.addDependency(this.p2, function(p) {
             return { x2: p.x, y2: p.y };
         });
     }
+
+    // Set class
+    var className = ((this.p1 && this.p1.draggable) || (this.p2 && this.p2.draggable)) ? "controllable-line" : "static-line";
+    this._setAttrIfNotYetSet({ 'class': className });
+    this.$element.addClass("line");
 };
 InteractiveLine.prototype = Object.create(SVGElement.prototype);
 
@@ -212,22 +218,17 @@ InteractiveLine.prototype = Object.create(SVGElement.prototype);
  *  with two draggable control points.
 **************************************************/
 
-var InteractiveBezier = function(svgObject, attr) {
+var InteractiveBezier = function(svgObject, attributes) {
     this.tagName = "path";
     this.addBelow = true;
-    this.p1 = svgObject._getPoint(attr, 'p1');
-    this.p2 = svgObject._getPoint(attr, 'p2');
-    this.p3 = svgObject._getPoint(attr, 'p3');
+    var reservedAttributes = ['label', 'p1', 'p2', 'p3', 'p4', 'showHandles'];
 
-    if (attr.showHandles) {
-        this.showHandles = attr.showHandles;
-        delete attr.showHandles;
-    }
-
-    if (attr.p4) { this.p4 = svgObject._getPoint(attr, 'p4'); }
-
-    var defaultAttr = { class: 'line controllable-line' };
-    SVGElement.call(this, svgObject, defaultAttr, attr);
+    SVGElement.call(this, svgObject, reservedAttributes, attributes);
+    
+    this.p1 = svgObject.getElement(this.p1);
+    this.p2 = svgObject.getElement(this.p2);
+    this.p3 = svgObject.getElement(this.p3);
+    this.p4 = svgObject.getElement(this.p4);
 
     if (this.p4) {
         // Cubic bezier
@@ -261,6 +262,9 @@ var InteractiveBezier = function(svgObject, attr) {
             svgObject.addLine({ p1: this.p2, p2: this.p3, class: "line static-line" });
         }
     }
+
+    this.$element.addClass("line");
+    this.$element.addClass("controllable-line");
 };
 InteractiveBezier.prototype = Object.create(SVGElement.prototype);
 
@@ -269,30 +273,28 @@ InteractiveBezier.prototype = Object.create(SVGElement.prototype);
  *  A circle which can be dragged by its center.
 **************************************************/
 
-var InteractiveCircle = function(svgObject, attr) {
+var InteractiveCircle = function(svgObject, attributes) {
     this.tagName = 'circle';
     this.addBelow = true;
+    var reservedAttributes = ['label', 'x', 'y', 'center', 'r'];
+
+    SVGElement.call(this, svgObject, reservedAttributes, attributes);
 
     // If center not defined by a center attribute it could defined by x and y attributes
-    if (!attr.center && attr.x !== undefined && attr.y !== undefined) {
-        attr.center = { x: attr.x, y: attr.y };
+    if (this.center) {
+        this.center = svgObject.getElement(this.center);
+    } else if (this.x !== undefined && this.y !== undefined) {
+        this.center = { x: this.x, y: this.y };
+    } else {
+        this.center = { x: attributes.cx || 0, y: attributes.cy || 0 };
     }
-
-    this.center = svgObject._getPoint(attr, 'center');
-    if (!this.center) {
-        this.center = { x: attr.cx || 0, y: attr.cy || 0 };
-    }
-    this.r = svgObject._getPoint(attr, 'r');
-
-    this.type = (this.center.draggable || this.r.draggable) ? 'controllable' : 'static';
-    var defaultAttr = { class: "line " + this.type + "-line" };
-
-    SVGElement.call(this, svgObject, defaultAttr, attr);
 
     // Circle coordinates depend on its center point
     this.addDependency(this.center, function(center) {
         return { cx: center.x, cy: center.y };
     });
+
+    this.r = svgObject.getElement(this.r);
 
     // Radius can be a number or determined by a points
     if (isNaN(this.r)) {
@@ -310,6 +312,11 @@ var InteractiveCircle = function(svgObject, attr) {
     } else {
         this.update({ r: this.r });
     }
+
+    // Set classes
+    var className = (this.center.draggable || this.r.draggable) ? 'controllable-line' : 'static-line';
+    this._setAttrIfNotYetSet({ 'class': className });
+    this.$element.addClass("line");
 };
 InteractiveCircle.prototype = Object.create(SVGElement.prototype);
 
@@ -423,10 +430,10 @@ InteractiveSVG.prototype.getElement = function(label) {
     }
 };
 
-// Given a label as a name in an attr hash return the point or a default
-InteractiveSVG.prototype._getPoint = function(attr, name) {
-    var label = attr[name];
-    delete attr[name];
+// Given a label as a name in an attributes object return the point or a default
+InteractiveSVG.prototype._getPoint = function(attributes, name) {
+    var label = attributes[name];
+    delete attributes[name];
     return this.getElement(label);
 };
 
@@ -460,52 +467,52 @@ InteractiveSVG.prototype.addDependency = function(dependentObject, controlObject
     updateDependentObject();
 };
 
-InteractiveSVG.prototype.addPoint = function(attr) {
-    return new InteractivePoint(this, attr);
+InteractiveSVG.prototype.addPoint = function(attributes) {
+    return new InteractivePoint(this, attributes);
 };
 
-InteractiveSVG.prototype.addStaticPoint = function(attr) {
-    attr.static = true;
-    return new InteractivePoint(this, attr);
+InteractiveSVG.prototype.addStaticPoint = function(attributes) {
+    attributes.static = true;
+    return new InteractivePoint(this, attributes);
 };
 
-InteractiveSVG.prototype.addLine = function(attr) {
-    if (Array.isArray(attr)) {
+InteractiveSVG.prototype.addLine = function(attributes) {
+    if (Array.isArray(attributes)) {
         var i, lines = [];
-        for (i = 1; i < attr.length; i++) {
+        for (i = 1; i < attributes.length; i++) {
             lines.push(
-                new InteractiveLine(this, { p1: attr[i - 1], p2: attr[i] })
+                new InteractiveLine(this, { p1: attributes[i - 1], p2: attributes[i] })
             );
         }
         return lines;
     }
 
-    return new InteractiveLine(this, attr);
+    return new InteractiveLine(this, attributes);
 };
 
-InteractiveSVG.prototype.addBezier = function(attr, attr2) {
-    if (Array.isArray(attr)) {
+InteractiveSVG.prototype.addBezier = function(attributes, attr2) {
+    if (Array.isArray(attributes)) {
         var i, newAttr = attr2 || {};
-        for (i = 0; i < attr.length; i++) {
-            newAttr['p' + (i + 1)] = attr[i];
+        for (i = 0; i < attributes.length; i++) {
+            newAttr['p' + (i + 1)] = attributes[i];
         }
-        attr = newAttr;
+        attributes = newAttr;
     }
-    return new InteractiveBezier(this, attr);
+    return new InteractiveBezier(this, attributes);
 };
 
-InteractiveSVG.prototype.addCircle = function(attr) {
-    return new InteractiveCircle(this, attr);
+InteractiveSVG.prototype.addCircle = function(attributes) {
+    return new InteractiveCircle(this, attributes);
 };
 
-InteractiveSVG.prototype.addElement = function(tagName, attr) {
+InteractiveSVG.prototype.addElement = function(tagName, attributes) {
     return $(document.createElementNS(xmlns, tagName))
-            .attr(attr)
+            .attr(attributes)
             .appendTo(this.$svg);
 };
 
-InteractiveSVG.prototype.addElementToBottom = function(tagName, attr) {
+InteractiveSVG.prototype.addElementToBottom = function(tagName, attributes) {
     return $(document.createElementNS(xmlns, tagName))
-            .attr(attr)
+            .attr(attributes)
             .insertAfter(this.$background);
 };
