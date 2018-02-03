@@ -280,7 +280,7 @@ var InteractiveCircle = function(svgObject, attributes) {
 
     SVGElement.call(this, svgObject, reservedAttributes, attributes);
 
-    // If center not defined by a center attribute it could defined by x and y attributes
+    // Center can be defined by a center attribute, (x, y) attributes or (cx, cy) attributes
     if (this.center) {
         this.center = svgObject.getElement(this.center);
     } else if (this.x !== undefined && this.y !== undefined) {
@@ -294,10 +294,10 @@ var InteractiveCircle = function(svgObject, attributes) {
         return { cx: center.x, cy: center.y };
     });
 
-    this.r = svgObject.getElement(this.r);
-
     // Radius can be a number or determined by a points
     if (isNaN(this.r)) {
+        this.r = svgObject.getElement(this.r);
+
         // Radius of the circle is dependent on point this.r
         this.addDependency(this.r, function(radiusPoint) {
             radiusPoint.dx = radiusPoint.x - this.center.x;
@@ -305,7 +305,7 @@ var InteractiveCircle = function(svgObject, attributes) {
             return { r: Math.sqrt(radiusPoint.dx * radiusPoint.dx + radiusPoint.dy * radiusPoint.dy) };
         });
 
-        // Point this.r is dependent on this.center
+        // Move the radius point when the center is moved
         this.r.addDependency(this.center, function(center) {
             return { cx: center.x + this.dx, cy: center.y + this.dy };
         });
