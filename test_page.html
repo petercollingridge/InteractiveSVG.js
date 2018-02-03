@@ -110,12 +110,15 @@
 (function() {
     var svg = InteractiveSVG.create('svg6', 200, 200);
     var A = svg.addPoint({ x: 40, y: 75 });
-    svg.addPoint({ label: 'B', x: 160, y: 75 });
-    svg.addLine({p1: A, p2: 'B'});
+    var B = svg.addPoint({ x: 160, y: 75 });
+    svg.addLine({p1: A, p2: B});
+
     svg.addLine({p1: A, p2: {x: 40, y: 160}});
-    svg.addLine({x1: 160, y1: 160, p2: 'B'});
+    svg.addLine({x1: 160, y1: 160, p2: B});
     svg.addLine({x1: 30, y1: 175, x2: 170, y2: 175});
-    svg.addLine([A, {x: 100, y: 25}, 'B'])
+
+    svg.addPoint({ label: 'C', x: 100, y: 25 });
+    svg.addLine([A, 'C', B])
 })();
 
 // Circle example
