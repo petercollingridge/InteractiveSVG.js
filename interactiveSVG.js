@@ -430,13 +430,6 @@ InteractiveSVG.prototype.getElement = function(label) {
     }
 };
 
-// Given a label as a name in an attributes object return the point or a default
-InteractiveSVG.prototype._getPoint = function(attributes, name) {
-    var label = attributes[name];
-    delete attributes[name];
-    return this.getElement(label);
-};
-
 // Make dependentObject depend on controlObjects, so when controlObjects is updated, 
 // dependentObject is also updated, sending the result of the updateFunction
 InteractiveSVG.prototype.addDependency = function(dependentObject, controlObjects, updateFunction) {
