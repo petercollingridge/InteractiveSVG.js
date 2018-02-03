@@ -28,6 +28,7 @@
     <div id="svg6" class="svg-wrapper"></div>
     <div id="svg7" class="svg-wrapper"></div>
     <div id="svg8" class="svg-wrapper"></div>
+    <div id="svg9" class="svg-wrapper"></div>
 
     <script type="text/javascript">
         (function() {
@@ -137,6 +138,16 @@
     svg.addPoint({ label: 'B', x: 120, y: 25 });
     svg.addBezier({ p1: A, p2: 'B', p3: { x: 200, y: 160 } });
     svg.addBezier([A, {x: 25, y: 50}, {x: 175, y: 100}, 'B' ]);
+})();
+
+// Bezier example
+(function() {
+    var svg = InteractiveSVG.create('svg9', 240, 200);
+    var A = svg.addPoint({ x: 40, y: 50 });
+    var B = svg.addPoint({ x: 80, y: 150 });
+    var C = svg.addPoint({ x: 120, y: 50 });
+    var D = svg.addPoint({ x: 160, y: 150 });
+    svg.addBezier([A, B, C, D], { showHandles: true });
 })();
 
 (function() {

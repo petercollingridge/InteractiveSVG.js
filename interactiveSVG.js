@@ -219,6 +219,11 @@ var InteractiveBezier = function(svgObject, attr) {
     this.p2 = svgObject._getPoint(attr, 'p2');
     this.p3 = svgObject._getPoint(attr, 'p3');
 
+    if (attr.showHandles) {
+        this.showHandles = attr.showHandles;
+        delete attr.showHandles;
+    }
+
     if (attr.p4) { this.p4 = svgObject._getPoint(attr, 'p4'); }
 
     var defaultAttr = { class: 'line controllable-line' };
@@ -235,6 +240,11 @@ var InteractiveBezier = function(svgObject, attr) {
                 d += " " + p4.x + " " + p4.y;
                 return { d: d };
         });
+
+        if (this.showHandles) {
+            svgObject.addLine({ p1: this.p1, p2: this.p2, class: "line static-line" });
+            svgObject.addLine({ p1: this.p3, p2: this.p4, class: "line static-line" });
+        }
     } else {
         // Quadratic bezier
         this.addDependency(
@@ -245,6 +255,11 @@ var InteractiveBezier = function(svgObject, attr) {
                 d += " " + p3.x + " " + p3.y;
                 return { d: d };
         });
+
+        if (this.showHandles) {
+            svgObject.addLine({ p1: this.p1, p2: this.p2, class: "line static-line" });
+            svgObject.addLine({ p1: this.p2, p2: this.p3, class: "line static-line" });
+        }
     }
 };
 InteractiveBezier.prototype = Object.create(SVGElement.prototype);
@@ -468,9 +483,9 @@ InteractiveSVG.prototype.addLine = function(attr) {
     return new InteractiveLine(this, attr);
 };
 
-InteractiveSVG.prototype.addBezier = function(attr) {
+InteractiveSVG.prototype.addBezier = function(attr, attr2) {
     if (Array.isArray(attr)) {
-        var i, newAttr = {};
+        var i, newAttr = attr2 || {};
         for (i = 0; i < attr.length; i++) {
             newAttr['p' + (i + 1)] = attr[i];
         }
