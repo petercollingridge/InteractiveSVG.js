@@ -44,6 +44,7 @@
 
 .interactiveSVG .controllable-point {
     fill: rgb(64, 95, 237);
+    pointer-events: none;
 }
 
 .interactiveSVG .controllable-line {
@@ -52,6 +53,7 @@
 
 .interactiveSVG .generated-point {
     fill: rgb(28, 173, 123);
+    pointer-events: none;
 }
 
 .interactiveSVG .generated-line {
