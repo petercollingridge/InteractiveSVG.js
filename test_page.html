@@ -31,6 +31,7 @@
     <div id="svg8" class="svg-wrapper"></div>
     <div id="svg9" class="svg-wrapper"></div>
     <div id="svg10" class="svg-wrapper"></div>
+    <div id="svg11" class="svg-wrapper"></div>
 
     <script type="text/javascript">
         (function() {
@@ -83,7 +84,7 @@
             );
         })();
 
-        var canvas2 = InteractiveSVG.createFromJSON({
+        InteractiveSVG.createFromJSON({
             id: 'svg4',
             width: 300,
             height: 200,
@@ -210,7 +211,6 @@
             I1.update({visibility: 'hidden'});
             I2.update({visibility: 'hidden'});
         }
-
     };
 
     A.dependents.push(circleLineIntersection);
@@ -218,6 +218,7 @@
     C.dependents.push(circleLineIntersection);
 })();
 
+// Midpoints
 (function() {
     var svg = InteractiveSVG.create('svg10', 200, 200);
     var A = svg.addPoint({ x: 100, y: 20 });
@@ -233,6 +234,20 @@
     svg.addLine([m1, m2, m3, m4, m1]);
 })();
 
+// Dependency example
+(function() {
+    var svg = InteractiveSVG.create('svg11', 200, 200);
+    var A = svg.addPoint({ x: 100, y: 20 });
+    var B = svg.addPoint({ x: 160, y: 160 });
+    svg.addStaticPoint({
+        x: 160, y: 20, class: 'generated-point'
+    }).addDependency(
+        [A, B],
+        function(A, B) {
+            return { cx: A.x, cy: B.y };
+        }
+    );
+})();
     </script>
 </body>
 </html>
