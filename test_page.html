@@ -30,6 +30,7 @@
     <div id="svg7" class="svg-wrapper"></div>
     <div id="svg8" class="svg-wrapper"></div>
     <div id="svg9" class="svg-wrapper"></div>
+    <div id="svg10" class="svg-wrapper"></div>
 
     <script type="text/javascript">
         (function() {
@@ -143,7 +144,6 @@
     svg.addCircle({ cx: 150, cy: 150, r: 'C' });
 })();
 
-
 // Bezier example
 (function() {
     var svg = InteractiveSVG.create('svg3', 240, 200);
@@ -216,8 +216,23 @@
     A.dependents.push(circleLineIntersection);
     B.dependents.push(circleLineIntersection);
     C.dependents.push(circleLineIntersection);
-
 })();
+
+(function() {
+    var svg = InteractiveSVG.create('svg10', 200, 200);
+    var A = svg.addPoint({ x: 100, y: 20 });
+    var B = svg.addPoint({ x: 160, y: 20 });
+    var C = svg.addPoint({ x: 150, y: 140 });
+    var D = svg.addPoint({ x: 20, y: 180 });
+    svg.addLine([A, B, C, D, A]);
+
+    var m1 = svg.addMidPoint(A, B);
+    var m2 = svg.addMidPoint(B, C);
+    var m3 = svg.addMidPoint(C, D);
+    var m4 = svg.addMidPoint(D, A);
+    svg.addLine([m1, m2, m3, m4, m1]);
+})();
+
     </script>
 </body>
 </html>
