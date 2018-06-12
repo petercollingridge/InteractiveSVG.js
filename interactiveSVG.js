@@ -349,17 +349,14 @@ var InteractiveSVG = (function() {
 
     // Updating the element's cx and cy attributes should update the object x and y attributes
     InteractiveText.prototype._updateAttr = function(attributes) {
-        console.log(attributes)
         if (attributes.value !== undefined) {
+            this.value = attributes.value;
             this.$element.html(attributes.value);
         }
-        console.log(this.value);
     };
 
     // Scrubbing numbers horizontally changes its value
     InteractiveText.prototype.move = function(dx, dy) {
-        console.log("start " + this.value + " " + dx)
-        console.log("now " + parseInt(parseFloat(this.value) + dx, 10))
         this.update({ value: parseInt(parseFloat(this.value) + dx, 10) });
     };
 
@@ -427,6 +424,8 @@ var InteractiveSVG = (function() {
 
         this.$svg.on('mousemove', function(evt) {
             if (self.selected) {
+                evt.preventDefault();
+                
                 // Get dragging to work on touch device
                 if (evt.type === 'touchmove') { evt = evt.touches[0]; }
 
@@ -511,6 +510,9 @@ var InteractiveSVG = (function() {
     };
 
     InteractiveSVG.prototype.addStaticPoint = function(attributes) {
+        if (arguments.length > 1) {
+            attributes = { x: arguments[0], y: arguments[1] };
+        }
         attributes.static = true;
         return new InteractivePoint(this, attributes);
     };
