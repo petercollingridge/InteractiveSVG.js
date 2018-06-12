@@ -504,6 +504,9 @@ var InteractiveSVG = (function() {
     };
 
     InteractiveSVG.prototype.addPoint = function(attributes) {
+        if (arguments.length > 1) {
+            attributes = { x: arguments[0], y: arguments[1] };
+        }
         return new InteractivePoint(this, attributes);
     };
 

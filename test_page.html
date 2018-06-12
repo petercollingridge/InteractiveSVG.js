@@ -32,6 +32,7 @@
     <div id="svg9" class="svg-wrapper"></div>
     <div id="svg10" class="svg-wrapper"></div>
     <div id="svg11" class="svg-wrapper"></div>
+    <div id="svg12" class="svg-wrapper"></div>
 
     <script type="text/javascript">
         (function() {
@@ -41,20 +42,16 @@
             var staticCenter = svg.addStaticPoint({ x: 200, y: 200 });
             svg.addCircle({ center: staticCenter, r: 100, static: true });
 
-            // Create circle with controllable radius
-            svg.addPoint({ label: 'A', x: 150, y: 100 });
-            svg.addPoint({ label: 'B', x: 190, y: 100 });
-            svg.addCircle({ center: 'A', r: 'B' });
-
-            svg.addPoint({ label: 'C', x: 200, y: 180 });
-            svg.addPoint({ label: 'D', x: 220, y: 200 });            
-            svg.addPoint({ label: 'E', x: 180, y: 200 });
+            var A = svg.addPoint({ x: 200, y: 180 });
+            var B = svg.addPoint({ x: 220, y: 200 });            
+            var C = svg.addPoint({ x: 180, y: 200 });
 
             // Create circle that depends on three points
-            var c = svg.addCircle({ center: {x: 200, y: 200}, r: 20, class: 'generated-line' });
-            c.addDependency(['C', 'D', 'E'], defineCircleFromThreePoints);
+            var c = svg.addCircle({ center: {x: 200, y: 200}, r: 20, 'class': 'controllable-line' });
+            c.addDependency([A, B, C], defineCircleFromThreePoints);
         })();
 
+        // Line-line intersection
         (function() {
             var canvas1 = InteractiveSVG.create('svg2', 240, 200);
             var A = canvas1.addPoint({ x: 100, y: 150 });
@@ -105,6 +102,7 @@
 (function() {
     var svg = InteractiveSVG.create('svg0', 200, 200);
     svg.addPoint({ x: 50, y: 50 });
+    svg.addPoint(100, 100);
     svg.addPoint({ x: 150, y: 50, static: true });
     svg.addPoint({ x: 50, y: 150, r: 10 });
     svg.addPoint({ x: 150, y: 150, class: 'controllable-point' });
@@ -164,13 +162,14 @@
     svg.addBezier([A, B, C, D], { showHandles: true });
 })();
 
+// Line circle intersections
 (function() {
     var svg = InteractiveSVG.create('svg6', 200, 200);
     var A = svg.addPoint({ x: 40, y: 50 });
     var B = svg.addPoint({ x: 160, y: 50 });
     var C = svg.addPoint({ x: 100, y: 120 });
     svg.addLine({p1: A, p2: B});
-    var D = svg.addCircle({center: C, r: 60});
+    var circle = svg.addCircle({center: C, r: 60});
 
     var I1 = svg.addStaticPoint({ x: 100, y: 120, visibility: 'hidden', r: 4, class: 'point generated-point'});
     var I2 = svg.addStaticPoint({ x: 100, y: 120, visibility: 'hidden', r: 4, class: 'point generated-point'});
@@ -183,7 +182,7 @@
 
         var a = dx * dx + dy * dy;
         var b = dx * dx2 + dy * dy2;
-        var c = dx2 * dx2 + dy2 * dy2 - D.r * D.r;
+        var c = dx2 * dx2 + dy2 * dy2 - circle.r * circle.r;
 
         var discriminant = b * b - a * c;
 
@@ -245,6 +244,19 @@
         [A, B],
         function(A, B) {
             return { cx: A.x, cy: B.y };
+        }
+    );
+})();
+
+// Text example
+(function() {
+    var svg = InteractiveSVG.create('svg12', 200, 200);
+    var P = svg.addPoint({ x: 100, y: 40 });
+    svg.addText({
+        x: 100, y: 20, value: "100"
+    }).addDependency(
+        P, function(P) {
+            return { value: P.x };
         }
     );
 })();
