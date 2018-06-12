@@ -88,10 +88,6 @@ var InteractiveSVG = (function() {
     var SVGElement = function(svgObject, reservedAttributes, attributes) {
         this.svg = svgObject;
 
-        // Called when the element is updated
-        // Empty but can be overwritten
-        this.onUpdate = function() {};
-
         // Array of object to update when this is updated
         this.dependents = [];
 
@@ -127,8 +123,6 @@ var InteractiveSVG = (function() {
         for (var i = 0; i < this.dependents.length; i++) {
             this.dependents[i]();
         }
-
-        this.onUpdate();
     };
 
     // Make this element dependent on another with an update function
@@ -425,7 +419,7 @@ var InteractiveSVG = (function() {
         this.$svg.on('mousemove', function(evt) {
             if (self.selected) {
                 evt.preventDefault();
-                
+
                 // Get dragging to work on touch device
                 if (evt.type === 'touchmove') { evt = evt.touches[0]; }
 
