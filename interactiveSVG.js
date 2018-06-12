@@ -73,7 +73,7 @@ function defineCircleFromThreePoints(p1, p2, p3) {
     return {cx: cx, cy: cy, r: r};
 }
 
-function findMidPoint(A, B){
+function findMidPoint(A, B) {
     return { cx: (A.x + B.x) / 2, cy: (A.y + B.y) / 2 };
 }
 
@@ -95,7 +95,8 @@ var InteractiveSVG = (function() {
         // Array of object to update when this is updated
         this.dependents = [];
 
-        // Set default attributes
+        // reservedAttributes are attributes for the SVGElement object,
+        // but not for SVG element itself.
         for (var i = 0; i < reservedAttributes.length; i++) {
             var attributeName = reservedAttributes[i];
             if (attributes[attributeName] !== undefined) {
@@ -179,7 +180,7 @@ var InteractiveSVG = (function() {
     };
 
     // Updating the element's cx and cy attributes should update the object x and y attributes
-    SVGElement.prototype._updateAttr = function(attributes) {
+    InteractivePoint.prototype._updateAttr = function(attributes) {
         if (attributes.cx !== undefined) { this.x = attributes.cx; }
         if (attributes.cy !== undefined) { this.y = attributes.cy; }
     };
@@ -325,6 +326,42 @@ var InteractiveSVG = (function() {
         this.$element.addClass("line");
     };
     InteractiveCircle.prototype = Object.create(SVGElement.prototype);
+
+    /*************************************************
+     *      InteractiveText
+     *  A text element whose text content is variable.
+    **************************************************/
+
+    var InteractiveText = function(svgObject, attributes) {
+        this.tagName = "text";
+        var reservedAttributes = ['value'];
+        this.draggable = true;
+
+        SVGElement.call(this, svgObject, reservedAttributes, attributes);
+
+        // Create text node
+        this.$element.html(this.value || "");
+
+        // Set class
+        this.$element.addClass("text");
+    };
+    InteractiveText.prototype = Object.create(SVGElement.prototype);
+
+    // Updating the element's cx and cy attributes should update the object x and y attributes
+    InteractiveText.prototype._updateAttr = function(attributes) {
+        console.log(attributes)
+        if (attributes.value !== undefined) {
+            this.$element.html(attributes.value);
+        }
+        console.log(this.value);
+    };
+
+    // Scrubbing numbers horizontally changes its value
+    InteractiveText.prototype.move = function(dx, dy) {
+        console.log("start " + this.value + " " + dx)
+        console.log("now " + parseInt(parseFloat(this.value) + dx, 10))
+        this.update({ value: parseInt(parseFloat(this.value) + dx, 10) });
+    };
 
     /*************************************************
      *      InteractiveSVG
@@ -513,6 +550,10 @@ var InteractiveSVG = (function() {
         return new InteractiveCircle(this, attributes);
     };
 
+    InteractiveSVG.prototype.addText = function(attributes) {
+        return new InteractiveText(this, attributes);
+    };
+
     InteractiveSVG.prototype.addElement = function(tagName, attributes) {
         return $(document.createElementNS(xmlns, tagName))
                 .attr(attributes)
@@ -526,4 +567,4 @@ var InteractiveSVG = (function() {
     };
 
     return InteractiveSVG;
-})()
+})();
