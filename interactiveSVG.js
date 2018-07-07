@@ -85,21 +85,15 @@ var InteractiveSVG = (function() {
      *  A object that wraps an SVG element.
     **************************************************/
 
-    var SVGElement = function(svgObject, reservedAttributes, attributes) {
+    var SVGElement = function(svgObject, attributes, proxyAttributes) {
         this.svg = svgObject;
 
-        // Array of object to update when this is updated
-        this.dependents = [];
+        // Map attribute name used in object to function that changes an SVG attribute
+        // e.g. x => cx
+        this.proxyAttributes = proxyAttributes || {};
 
-        // reservedAttributes are attributes for the SVGElement object,
-        // but not for SVG element itself.
-        for (var i = 0; i < reservedAttributes.length; i++) {
-            var attributeName = reservedAttributes[i];
-            if (attributes[attributeName] !== undefined) {
-                this[attributeName] = attributes[attributeName];
-                delete attributes[attributeName];
-            }
-        }
+        // Map attributes that this object to list of objects that share that attribute
+        this.linkedAttributes = {};
 
         // Create new SVG element
         if (this.addBelow) {
@@ -108,31 +102,46 @@ var InteractiveSVG = (function() {
             this.$element = svgObject.addElement(this.tagName, attributes);
         }
 
-        if (this.draggable) {
-            svgObject._setAsDraggable(this);
-        }
+        this.update(attributes);
+
+        if (this.draggable) { svgObject._setAsDraggable(this); }
 
         if (this.label) { svgObject.elements[this.label] = this; }
     };
 
-    // Update the object with new attributes
+    // Update the object with a key, value map of attributes
     SVGElement.prototype.update = function(attributes) {
-        if (attributes) { this.$element.attr(attributes); }
-        this._updateAttr(attributes);
+        // Update linked attributes
+        for (var attributeName in attributes) {
+            var value = attributes[attributeName];
 
-        for (var i = 0; i < this.dependents.length; i++) {
-            this.dependents[i]();
+            this.updateAttribute(attributeName, value);
+
+            var linkedAttributes = this.linkedAttributes[attributeName];
+            if (linkedAttributes) {
+                for (var i = 0; i < linkedAttributes.length; i++) {
+                    this.linkedAttributes[attributeName][i](value);
+                }
+            }
         }
     };
 
-    // Make this element dependent on another with an update function
-    SVGElement.prototype.addDependency = function(controlObjects, updateFunction) {
-        this.svg.addDependency(this, controlObjects, updateFunction);
-        return this;
+    // Update the object with a given attribute and value
+    SVGElement.prototype.updateAttribute = function(attributeName, value) {
+        // Update object attributes
+        this[attributeName] = value;
+
+        // Update SVG element attributes
+        if (this.proxyAttributes[attributeName]) {
+            this.proxyAttributes[attributeName](this.$element, value);
+        } else {   
+            this.$element.attr(attributeName, value);
+        }
     };
 
-    // Empty to be overwritten
-    SVGElement.prototype._updateAttr = function() {};
+    SVGElement.prototype.translate = function(dx, dy) {
+        this.update({ x: this.x + dx, y: this.y + dy });
+    };
 
     SVGElement.prototype._setAttrIfNotYetSet = function(attributes) {
         var el = this.$element[0];
@@ -151,14 +160,16 @@ var InteractiveSVG = (function() {
     var InteractivePoint = function(svgObject, attributes) {
         this.tagName = "circle";
         this.draggable = !attributes.static;
-        var reservedAttributes = ['label', 'x', 'y', 'static'];
         
-        SVGElement.call(this, svgObject, reservedAttributes, attributes);
+        var proxyAttributes = {
+            x: function(el, value) { el.attr('cx', value); },
+            y: function(el, value) { el.attr('cy', value); }
+        };
+
+        SVGElement.call(this, svgObject, attributes, proxyAttributes);
      
         // Set attributes
         this._setAttrIfNotYetSet({
-            'cx': this.x || 0,
-            'cy': this.y || 0,
             'r': this.draggable ? 6 : 3,
             'class': this.draggable ? "draggable-point" : "static-point"
         });
@@ -166,18 +177,7 @@ var InteractiveSVG = (function() {
         // Set classes
         this.$element.addClass("point");
     };
-
     InteractivePoint.prototype = Object.create(SVGElement.prototype);
-
-    InteractivePoint.prototype.move = function(dx, dy) {
-        this.update({ cx: this.x + dx, cy: this.y + dy });
-    };
-
-    // Updating the element's cx and cy attributes should update the object x and y attributes
-    InteractivePoint.prototype._updateAttr = function(attributes) {
-        if (attributes.cx !== undefined) { this.x = attributes.cx; }
-        if (attributes.cy !== undefined) { this.y = attributes.cy; }
-    };
 
     /*************************************************
      *      InteractiveLine
@@ -187,24 +187,12 @@ var InteractiveSVG = (function() {
     var InteractiveLine = function(svgObject, attributes) {
         this.tagName = "line";
         this.addBelow = true;
-        var reservedAttributes = ['label', 'p1', 'p2'];
 
-        SVGElement.call(this, svgObject, reservedAttributes, attributes);
+        SVGElement.call(this, svgObject, attributes);
 
         // Create points
-        if (this.p1) {
-            this.p1 = svgObject.getElement(this.p1);
-            this.addDependency(this.p1, function(p) {
-                return { x1: p.x, y1: p.y };
-            });
-        }
-
-        if (this.p2) {
-            this.p2 = svgObject.getElement(this.p2);
-            this.addDependency(this.p2, function(p) {
-                return { x2: p.x, y2: p.y };
-            });
-        }
+        this.addPoint(svgObject, 1);
+        this.addPoint(svgObject, 2);
 
         // Set class
         var className = ((this.p1 && this.p1.draggable) || (this.p2 && this.p2.draggable)) ? "controllable-line" : "static-line";
@@ -212,6 +200,22 @@ var InteractiveSVG = (function() {
         this.$element.addClass("line");
     };
     InteractiveLine.prototype = Object.create(SVGElement.prototype);
+
+    InteractiveLine.prototype.addPoint = function(svgObject, n) {
+        var p = 'p' + n;
+
+        if (this[p]) {
+            p = svgObject.getElement(this[p]);
+            this[p] = p;
+            if (p instanceof SVGElement) {
+                svgObject.linkAttributes(this, 'x' + n, p, 'x');
+                svgObject.linkAttributes(this, 'y' + n, p, 'y');
+            } else {
+                this.updateAttribute('x' + n, p.x || 0);
+                this.updateAttribute('y' + n, p.y || 0);
+            }
+        }
+    };
 
     /*************************************************
      *      InteractiveBezier
@@ -328,7 +332,7 @@ var InteractiveSVG = (function() {
 
     var InteractiveText = function(svgObject, attributes) {
         this.tagName = "text";
-        var reservedAttributes = ['value'];
+        var reservedAttributes = ['value', 'dynamicValue'];
         this.draggable = true;
 
         SVGElement.call(this, svgObject, reservedAttributes, attributes);
@@ -351,7 +355,7 @@ var InteractiveSVG = (function() {
 
     // Scrubbing numbers horizontally changes its value
     InteractiveText.prototype.move = function(dx, dy) {
-        this.update({ value: parseInt(parseFloat(this.value) + dx, 10) });
+        this.update({ value: parseFloat(parseFloat(this.value) + dx) });
     };
 
     /*************************************************
@@ -424,7 +428,7 @@ var InteractiveSVG = (function() {
                 if (evt.type === 'touchmove') { evt = evt.touches[0]; }
 
                 // Move based on change in mouse position
-                self.selected.move(
+                self.selected.translate(
                     evt.clientX - self.dragX,
                     evt.clientY - self.dragY
                 );
@@ -466,34 +470,27 @@ var InteractiveSVG = (function() {
         }
     };
 
-    // Make dependentObject depend on controlObjects, so when controlObjects is updated, 
-    // dependentObject is also updated, sending the result of the updateFunction
-    InteractiveSVG.prototype.addDependency = function(dependentObject, controlObjects, updateFunction) {
-        var getElement = this.getElement.bind(this);
-        dependentObject = getElement(dependentObject);
+    // Link two attributes of two objects so they have the same value and maintain the same value
+    InteractiveSVG.prototype.linkAttributes = function(object1, attribute1, object2, attribute2) {
+        this._setLinkedAttributeFunction(object1, attribute1, object2, attribute2);
+        // Call the second function to update object 1 attribute to match object 2
+        this._setLinkedAttributeFunction(object2, attribute2, object1, attribute1 , true);
+    };
 
-        // Ensure controlObject is an array of objects
-        if (!Array.isArray(controlObjects)) {
-            controlObjects = [getElement(controlObjects)];
-        } else {
-            controlObjects = controlObjects.map(function(element) {
-                return getElement(element);
-            });
-        }
-
-        var updateDependentObject = function() {
-            dependentObject.update(updateFunction.apply(dependentObject, controlObjects));
+    // Add a function to the linkedAttributes map on object1 so that when attribute1 of object1 is updated
+    // attribute2 of object2 is also updated.
+    InteractiveSVG.prototype._setLinkedAttributeFunction = function(object1, attribute1, object2, attribute2, toCall) {
+        var updateFunction = function(value) {
+            object2.updateAttribute(attribute2, value);
         };
 
-        // If point is an InteractiveSVG object, then make the parent dependent on it
-        for (var i = 0; i < controlObjects.length; i++) {
-            var dependentsArray = controlObjects[i].dependents;
-            if (dependentsArray) {
-                dependentsArray.push(updateDependentObject);
-            }
+        if (object1.linkedAttributes[attribute1]) {
+            object1.linkedAttributes[attribute1].push(updateFunction);
+        } else {
+            object1.linkedAttributes[attribute1] = [updateFunction];
         }
 
-        updateDependentObject();
+        if (toCall) { updateFunction(object1[attribute1]); }
     };
 
     InteractiveSVG.prototype.addPoint = function(attributes) {

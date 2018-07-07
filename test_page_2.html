@@ -1,0 +1,67 @@
+<!DOCTYPE HTML>
+<html lang="en">
+
+<head>
+    <title>Interactive SVGs</title>
+    <link rel="stylesheet" type="text/css" href="interactiveSVG.css">
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+    <script type="text/javascript" src="interactiveSVG.js"></script>
+
+    <style type="text/css">
+        .svg-wrapper {
+            display: inline-block;  
+        }
+    </style>
+
+</head>
+
+<body>
+    <h1>Test page</h1>
+    <p>This page contains multiple inline SVGs to make sure they don't interact with one another.</p>
+
+    <p>Here is the first</p>
+    <div id="svg-1" class="svg-wrapper"></div>
+    <div id="svg-2" class="svg-wrapper"></div>
+    <div id="svg-3" class="svg-wrapper"></div>
+    
+
+    <script type="text/javascript">
+        // Point example
+        (function() {
+            var svg = InteractiveSVG.create('svg-1', 200, 200);
+            svg.addPoint({ x: 50, y: 50 });
+            svg.addPoint(100, 80);
+            svg.addStaticPoint(100, 120);
+            svg.addPoint({ x: 150, y: 50, static: true });
+            svg.addPoint({ x: 50, y: 150, r: 10 });
+            svg.addPoint({ x: 150, y: 150, class: 'controllable-point' });
+        })();
+
+        // Linked attributes example
+        (function() {
+            var svg = InteractiveSVG.create('svg-2', 200, 200);
+            var A = svg.addPoint(100, 180);
+            var B = svg.addPoint(10, 100);
+            var C = svg.addPoint(100, 100);
+
+            svg.linkAttributes(A, 'x', C, 'x');
+            svg.linkAttributes(B, 'y', C, 'y');
+        })();
+
+        // Line example
+        (function() {
+            var svg = InteractiveSVG.create('svg-3', 200, 200);
+            var A = svg.addPoint({ x: 40, y: 75 });
+            var B = svg.addPoint({ x: 160, y: 75 });
+            svg.addLine({p1: A, p2: B});
+
+            svg.addLine({p1: A, p2: {x: 40, y: 160}});
+            svg.addLine({x1: 160, y1: 160, p2: B});
+            svg.addLine({x1: 30, y1: 175, x2: 170, y2: 175});
+
+            svg.addPoint({ label: 'C', x: 100, y: 25 });
+            svg.addLine([A, 'C', B])
+        })();
+    </script>
+</body>
+</html>
