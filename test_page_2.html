@@ -23,7 +23,7 @@
     <div id="svg-1" class="svg-wrapper"></div>
     <div id="svg-2" class="svg-wrapper"></div>
     <div id="svg-3" class="svg-wrapper"></div>
-    
+    <div id="svg-4" class="svg-wrapper"></div>
 
     <script type="text/javascript">
         // Point example
@@ -61,6 +61,22 @@
 
             svg.addPoint({ label: 'C', x: 100, y: 25 });
             svg.addLine([A, 'C', B])
+        })();
+
+        // Text example
+        (function() {
+            var svg = InteractiveSVG.create('svg-4', 200, 200);
+            var P = svg.addPoint({ x: 100, y: 40 });
+            var txt = svg.addText({ x: 100, y: 20, value: "100" });
+            svg.linkAttributes(txt, 'value', P, 'x');
+
+            var txt2 = svg.addText({ x: 100, y: 80, draggable: true, value: "Draggable" });
+            var txt3 = svg.addText({ x: 100, y: 120, scrubber: true, value: 5 });
+            var txt4 = svg.addText({ x: 100, y: 150, scrubber: true, value: 0, scrubberScale: 0.1 });
+
+            P = svg.addPoint({ x: 100, y: 160 });
+            svg.linkAttributes(txt3, 'value', P, 'x');
+            svg.linkAttributes(txt4, 'value', P, 'x');
         })();
     </script>
 </body>

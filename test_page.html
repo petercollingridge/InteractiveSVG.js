@@ -33,6 +33,7 @@
     <div id="svg10" class="svg-wrapper"></div>
     <div id="svg11" class="svg-wrapper"></div>
     <div id="svg12" class="svg-wrapper"></div>
+    <div id="svg13" class="svg-wrapper"></div>
 
     <script type="text/javascript">
         (function() {
@@ -102,7 +103,8 @@
 (function() {
     var svg = InteractiveSVG.create('svg0', 200, 200);
     svg.addPoint({ x: 50, y: 50 });
-    svg.addPoint(100, 100);
+    svg.addPoint(100, 80);
+    svg.addStaticPoint(100, 120);
     svg.addPoint({ x: 150, y: 50, static: true });
     svg.addPoint({ x: 50, y: 150, r: 10 });
     svg.addPoint({ x: 150, y: 150, class: 'controllable-point' });
@@ -255,11 +257,28 @@
     svg.addText({
         x: 100, y: 20, value: "100"
     }).addDependency(
+        // Make the value of the text depend on the position of the point
         P, function(P) {
             return { value: P.x };
         }
     );
+
+    svg.addText({
+        x: 100, y: 40, dynamicValue: [P, 'x']
+    });
 })();
+
+// Linked attributes example
+(function() {
+    var svg = InteractiveSVG.create('svg13', 200, 200);
+    var A = svg.addPoint(100, 20);
+    var B = svg.addPoint(160, 160);
+    var C = svg.addPoint(10, 10);
+
+    svg.linkAttributes(A, 'x', C, 'x');
+    svg.linkAttributes(B, 'y', C, 'y');
+})();
+
     </script>
 </body>
 </html>

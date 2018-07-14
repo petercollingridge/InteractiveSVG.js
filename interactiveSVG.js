@@ -85,21 +85,22 @@ var InteractiveSVG = (function() {
      *  A object that wraps an SVG element.
     **************************************************/
 
-    var SVGElement = function(svgObject, attributes, proxyAttributes) {
+    var SVGElement = function(svgObject, attributes, hiddenAttributes) {
         this.svg = svgObject;
+        hiddenAttributes = ['static', 'label', 'draggable'].concat(hiddenAttributes || []);
 
-        // Map attribute name used in object to function that changes an SVG attribute
-        // e.g. x => cx
-        this.proxyAttributes = proxyAttributes || {};
+        this.proxyAttributes = this.proxyAttributes || {};
 
         // Map attributes that this object to list of objects that share that attribute
         this.linkedAttributes = {};
 
-        // Create new SVG element
-        if (this.addBelow) {
-            this.$element = svgObject.addElementToBottom(this.tagName, attributes);
-        } else {
-            this.$element = svgObject.addElement(this.tagName, attributes);
+        // hiddenAttributes are attributes for the SVGElement object, but not for SVG element itself.
+        for (var i = 0; i < hiddenAttributes.length; i++) {
+            var attributeName = hiddenAttributes[i];
+            if (attributes[attributeName] !== undefined) {
+                this[attributeName] = attributes[attributeName];
+                delete attributes[attributeName];
+            }
         }
 
         this.update(attributes);
@@ -134,7 +135,7 @@ var InteractiveSVG = (function() {
         // Update SVG element attributes
         if (this.proxyAttributes[attributeName]) {
             this.proxyAttributes[attributeName](this.$element, value);
-        } else {   
+        } else {
             this.$element.attr(attributeName, value);
         }
     };
@@ -158,20 +159,21 @@ var InteractiveSVG = (function() {
     **************************************************/
 
     var InteractivePoint = function(svgObject, attributes) {
-        this.tagName = "circle";
+        this.$element = svgObject.addElement('circle');
         this.draggable = !attributes.static;
         
-        var proxyAttributes = {
+        // Changing this object's x and y attributes changes its element's cx and cy attributes
+        this.proxyAttributes = {
             x: function(el, value) { el.attr('cx', value); },
             y: function(el, value) { el.attr('cy', value); }
         };
 
-        SVGElement.call(this, svgObject, attributes, proxyAttributes);
+        SVGElement.call(this, svgObject, attributes);
      
         // Set attributes
         this._setAttrIfNotYetSet({
             'r': this.draggable ? 6 : 3,
-            'class': this.draggable ? "draggable-point" : "static-point"
+            'class': this.draggable ? "draggable draggable-point" : "static-point"
         });
 
         // Set classes
@@ -185,10 +187,9 @@ var InteractiveSVG = (function() {
     **************************************************/
 
     var InteractiveLine = function(svgObject, attributes) {
-        this.tagName = "line";
-        this.addBelow = true;
+        this.$element = svgObject.addElementToBottom('line');
 
-        SVGElement.call(this, svgObject, attributes);
+        SVGElement.call(this, svgObject, attributes, ['p1', 'p2']);
 
         // Create points
         this.addPoint(svgObject, 1);
@@ -331,31 +332,41 @@ var InteractiveSVG = (function() {
     **************************************************/
 
     var InteractiveText = function(svgObject, attributes) {
-        this.tagName = "text";
-        var reservedAttributes = ['value', 'dynamicValue'];
-        this.draggable = true;
+        this.$element = svgObject.addElement('text');
 
-        SVGElement.call(this, svgObject, reservedAttributes, attributes);
+        this.proxyAttributes = {
+            value: function(el, value) { el.html(value); }
+        };
+
+        SVGElement.call(this, svgObject, attributes, ["scrubber", "scrubberScale", "hiddenValue"]);
 
         // Create text node
-        this.$element.html(this.value || "");
+        this.$element.html(this.value === undefined ? "" : this.value);
 
-        // Set class
-        this.$element.addClass("text");
+        if (this.draggable || this.scrubber) {
+            this.$element.addClass("draggable");
+
+            // Hidden value used for scrubber
+            if (this.scrubber) {
+                this.scrubberScale = this.scrubberScale || 1;
+                svgObject._setAsDraggable(this);
+            }
+        }
     };
     InteractiveText.prototype = Object.create(SVGElement.prototype);
 
-    // Updating the element's cx and cy attributes should update the object x and y attributes
-    InteractiveText.prototype._updateAttr = function(attributes) {
-        if (attributes.value !== undefined) {
-            this.value = attributes.value;
-            this.$element.html(attributes.value);
-        }
-    };
-
     // Scrubbing numbers horizontally changes its value
-    InteractiveText.prototype.move = function(dx, dy) {
-        this.update({ value: parseFloat(parseFloat(this.value) + dx) });
+    InteractiveText.prototype.translate = function(dx, dy) {
+        if (this.draggable) {
+            this.update({ x: this.x + dx, y: this.y + dy });
+        }
+        if (this.scrubber) {
+            var n = parseFloat(this.value);
+            if (!isNaN(n)) {
+                n = Math.round((n + this.scrubberScale * dx) * 1000) / 1000;
+                this.update({ value: n });
+            }
+        }
     };
 
     /*************************************************
@@ -410,7 +421,7 @@ var InteractiveSVG = (function() {
     };
 
     InteractiveSVG.prototype._addBackground = function() {
-        return this.addElement('rect', {
+        return this.addElement('rect').attr({
             class: 'background',
             width: this.$svg.attr('width'),
             height: this.$svg.attr('height')
@@ -550,16 +561,12 @@ var InteractiveSVG = (function() {
         return new InteractiveText(this, attributes);
     };
 
-    InteractiveSVG.prototype.addElement = function(tagName, attributes) {
-        return $(document.createElementNS(xmlns, tagName))
-                .attr(attributes)
-                .appendTo(this.$svg);
+    InteractiveSVG.prototype.addElement = function(tagName) {
+        return $(document.createElementNS(xmlns, tagName)).appendTo(this.$svg);
     };
 
-    InteractiveSVG.prototype.addElementToBottom = function(tagName, attributes) {
-        return $(document.createElementNS(xmlns, tagName))
-                .attr(attributes)
-                .insertAfter(this.$background);
+    InteractiveSVG.prototype.addElementToBottom = function(tagName) {
+        return $(document.createElementNS(xmlns, tagName)).insertAfter(this.$background);
     };
 
     return InteractiveSVG;

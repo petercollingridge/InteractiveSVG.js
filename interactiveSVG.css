@@ -21,17 +21,19 @@
     Grey: static
 */
 
+.draggable {
+    cursor: pointer
+}
+
 .interactiveSVG .draggable-point {
     fill: rgb(255, 165, 0);
     stroke: #f8f8f8;
     stroke-width: 1;
-    cursor: pointer
 }
 
 .interactiveSVG .draggable-line {
     stroke: rgb(255, 165, 0);
     stroke-width: 3;
-    cursor: pointer
 }
 
 .interactiveSVG .highlight-point {
