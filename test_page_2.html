@@ -24,6 +24,7 @@
     <div id="svg-2" class="svg-wrapper"></div>
     <div id="svg-3" class="svg-wrapper"></div>
     <div id="svg-4" class="svg-wrapper"></div>
+    <div id="svg-5" class="svg-wrapper"></div>
 
     <script type="text/javascript">
         // Point example
@@ -77,6 +78,19 @@
             P = svg.addPoint({ x: 100, y: 160 });
             svg.linkAttributes(txt3, 'value', P, 'x');
             svg.linkAttributes(txt4, 'value', P, 'x');
+        })();
+
+        // Tspan example
+        (function() {
+            var svg = InteractiveSVG.create('svg-5', 200, 200);
+            var txt = svg.addText({ x: 10, y: 20, value: "Point: " });
+            var xCoord = txt.addChild({scrubber: true, value: 5 });
+            txt.addChild({ value: ", " });
+            var yCoord = txt.addChild({scrubber: true, value: 20 });
+
+            var P = svg.addPoint({ x: 100, y: 160 });
+            svg.linkAttributes(xCoord, 'value', P, 'x');
+            svg.linkAttributes(yCoord, 'value', P, 'y');
         })();
     </script>
 </body>

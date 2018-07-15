@@ -331,8 +331,12 @@ var InteractiveSVG = (function() {
      *  A text element whose text content is variable.
     **************************************************/
 
-    var InteractiveText = function(svgObject, attributes) {
-        this.$element = svgObject.addElement('text');
+    var InteractiveText = function(svgObject, attributes, parentTextElement) {
+        if (parentTextElement) {
+            this.$element = svgObject.addChildElement('tspan', parentTextElement);
+        } else {
+            this.$element = svgObject.addElement('text');
+        }
 
         this.proxyAttributes = {
             value: function(el, value) { el.html(value); }
@@ -367,6 +371,10 @@ var InteractiveSVG = (function() {
                 this.update({ value: n });
             }
         }
+    };
+
+    InteractiveText.prototype.addChild = function(attributes) {
+        return new InteractiveText(this.svg, attributes, this.$element);
     };
 
     /*************************************************
@@ -567,6 +575,10 @@ var InteractiveSVG = (function() {
 
     InteractiveSVG.prototype.addElementToBottom = function(tagName) {
         return $(document.createElementNS(xmlns, tagName)).insertAfter(this.$background);
+    };
+
+    InteractiveSVG.prototype.addChildElement = function(tagName, $parent) {
+        return $(document.createElementNS(xmlns, tagName)).appendTo($parent);
     };
 
     return InteractiveSVG;
